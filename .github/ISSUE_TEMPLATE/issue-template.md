@@ -1,8 +1,6 @@
----
-name: ISSUE template
-about: Use this template when facing an issue.
+# ISSUE template
+Use this template when facing an issue.
 
----
 
 # Describe the bug  
 A clear and concise description of what is happening.
