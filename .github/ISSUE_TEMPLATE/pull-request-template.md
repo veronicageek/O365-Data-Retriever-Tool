@@ -1,8 +1,6 @@
----
-name: PULL REQUEST template
-about: This template should be used for any PR.
+# PULL REQUEST template
+This template should be used for any PR.
 
----
 
 ## What is your PR about?
 - [ ] Bug
