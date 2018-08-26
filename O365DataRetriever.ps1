@@ -942,7 +942,7 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveGAFileDialog.ShowDialog() -eq 'OK') {
-                    (Get-MsolRoleMember -RoleObjectId $GARoleObjectId) | Select-Object DisplayName, EmailAddress, IsLicensed | Export-Csv $($SaveGAFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    Get-MsolRoleMember -RoleObjectId $GARoleObjectId | Select-Object DisplayName, EmailAddress, IsLicensed | Export-Csv $($SaveGAFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
 
