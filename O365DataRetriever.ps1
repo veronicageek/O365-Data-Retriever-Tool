@@ -586,7 +586,7 @@ $ExportSkypeUsersButton = $Window.findname('ExportSkypeUsersButton')
 
 
 #Focus on AdminTextBox when Window loads
-$AdminTextBox.Focus()
+$AdminTextBox.Focus() | Out-Null
 
 
 #Enable the "Connect" button if text is entered in the $AdminTextBox
@@ -704,7 +704,7 @@ $ConnectButton.Add_Click( {
             $ConnectButton.Foreground = "White"
             $ConnectButton.Content = "Connected"
             $ConnectButton.IsHitTestVisible = $false
-            $AdminPwdTextbox.Clear()
+            #$AdminPwdTextbox.Clear()
             $AdminPwdTextbox.IsEnabled = $false
             $AdminPwdTextbox.Background = "#bdbfc1"
             $AdminTextBox.IsEnabled = $false
@@ -770,7 +770,8 @@ $ConnectButton.Add_Click( {
         Connect-SPOService -Url https://$SPOTenant-admin.sharepoint.com -Credential $creds
 
         #Connect to the Compliance Center
-		Write-Host "Connecting to the Compliance Center..." -ForegroundColor Cyan
+        Write-Host "Connecting to the Compliance Center..." -ForegroundColor Cyan
+        $creds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ($AdminUserName, $(ConvertTo-SecureString -String $AdminPwdTextbox.Password -AsPlainText -Force))
 		$ccSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ -Credential $creds -Authentication Basic -AllowRedirection
 		Import-PSSession $ccSession -Prefix cc -AllowClobber | Out-Null
 
@@ -1745,8 +1746,17 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveAllPersoSCFileDialog.ShowDialog() -eq 'OK') {
-                    Get-SPOSite -Limit All -IncludePersonalSite $true | Where-Object {$_.Url -like "*/personal*"} | Select-Object Title, Url, StorageLimit, StorageUsed, Owner, SharingCapability, LockState, Template |
-                        Export-Csv $($SaveAllPersoSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    Get-SPOSite -Limit All -IncludePersonalSite $true | `
+                        Where-Object {$_.Url -like "*/personal*"} | `
+                            Select-Object `
+                                @{N='Title';E={$_.Title}}, `
+                                @{N='StorageLimit';E={(($_.StorageQuota) / 1024).ToString("N")}}, `
+                                @{N='StorageUsed';E={(($_.StorageUsageCurrent) / 1024).ToString("N")}}, `
+                                @{N='Owner';E={$_.Owner}}, `
+                                @{N='SharingCapability';E={$_.SharingCapability}}, `
+                                @{N='LockState';E={$_.LockState}}, `
+                                @{N='Template';E={$_.Template}} | `
+                                    Export-Csv $($SaveAllPersoSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
 #endregion
