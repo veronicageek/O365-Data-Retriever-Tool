@@ -733,7 +733,7 @@ $ConnectButton.Add_Click( {
 
 		#If user is MFA enabled
 		$UserAuthN = Get-MsolUser -UserPrincipalName ($creds).UserName 
-		if(($UserAuthN.StrongAuthenticationMethods) -ne $null){
+		if($UserAuthN.StrongPasswordRequired -eq $true) {
 			Write-Host "You are MFA enabled..." -ForegroundColor Magenta
 			Write-Host "Unfortunately, we don't support users enabled for MFA at this point in time. Try again with a user account not MFA enabled." -ForegroundColor White -BackgroundColor DarkRed
 			$Window.Close()
