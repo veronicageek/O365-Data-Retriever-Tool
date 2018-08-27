@@ -631,9 +631,11 @@ $ConnectButton.Add_Click( {
 		#Check ExecutionPolicy is set to "Unrestricted" on computer running the tool (for version 0.1.0)
 		$ExecutionPolicy = Get-ExecutionPolicy
 		if($ExecutionPolicy -ne "Unrestricted"){
-			Write-Host "For this release 0.1.0, the execution policy must be set to Unrestricted. Please change it and try again." -ForegroundColor White -BackgroundColor DarkRed
-			$Window.Close()
-			break
+            Write-Host "For this release 0.1.0, the execution policy must be set to Unrestricted. Current Setting $ExecutionPolicy." -ForegroundColor White -BackgroundColor DarkRed
+            Write-Host "We will set it to Unrestricted for this process but not more!" -ForegroundColor Green
+            Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process
+			#$Window.Close()
+			#break
 		}
 		else{
 			Write-Host "Execution policy set to Unrestricted. OK." -ForegroundColor Green
@@ -766,8 +768,9 @@ $ConnectButton.Add_Click( {
         Import-PSSession $SfBOsession -AllowClobber | Out-Null
 
         #Connect to SPO
-		Write-Host "Connecting to SharePoint Online..." -ForegroundColor Cyan
-        Connect-SPOService -Url https://$SPOTenant-admin.sharepoint.com -Credential $creds
+        Write-Host "Connecting to SharePoint Online..." -ForegroundColor Cyan
+        $creds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ($AdminUserName, $(ConvertTo-SecureString -String $AdminPwdTextbox.Password -AsPlainText -Force))
+        Connect-SPOService -Credential $creds -Url "https://$SPOTenant-admin.sharepoint.com"
 
         #Connect to the Compliance Center
         Write-Host "Connecting to the Compliance Center..." -ForegroundColor Cyan
