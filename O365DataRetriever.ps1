@@ -6,7 +6,8 @@ O365 Data Retriever - Release 0.1.0 (Aug 22nd, 2018)
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, system.windows.forms
 
 #Refer to the XAML file
-[xml]$xml = Get-Content "C:\O365DataRetriever\MainWindow.xaml"
+[string]$xamlContent = Get-Content $(Join-Path -Path $PSScriptRoot -ChildPath 'MainWindow.xaml' )
+[xml]$xml = $xamlContent.Replace('{0}',$PSScriptRoot)
 $xamlFile = $xml
 
 #Read & Load the xaml file
@@ -585,7 +586,7 @@ $ExportSkypeUsersButton = $Window.findname('ExportSkypeUsersButton')
 
 
 #Focus on AdminTextBox when Window loads
-$AdminTextBox.Focus()
+$AdminTextBox.Focus() | Out-Null
 
 
 #Enable the "Connect" button if text is entered in the $AdminTextBox
@@ -630,9 +631,11 @@ $ConnectButton.Add_Click( {
 		#Check ExecutionPolicy is set to "Unrestricted" on computer running the tool (for version 0.1.0)
 		$ExecutionPolicy = Get-ExecutionPolicy
 		if($ExecutionPolicy -ne "Unrestricted"){
-			Write-Host "For this release 0.1.0, the execution policy must be set to Unrestricted. Please change it and try again." -ForegroundColor White -BackgroundColor DarkRed
-			$Window.Close()
-			break
+            Write-Host "For this release 0.1.0, the execution policy must be set to Unrestricted. Current Setting $ExecutionPolicy." -ForegroundColor White -BackgroundColor DarkRed
+            Write-Host "We will set it to Unrestricted for this process but not more!" -ForegroundColor Green
+            Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process
+			#$Window.Close()
+			#break
 		}
 		else{
 			Write-Host "Execution policy set to Unrestricted. OK." -ForegroundColor Green
@@ -703,7 +706,7 @@ $ConnectButton.Add_Click( {
             $ConnectButton.Foreground = "White"
             $ConnectButton.Content = "Connected"
             $ConnectButton.IsHitTestVisible = $false
-            $AdminPwdTextbox.Clear()
+            #$AdminPwdTextbox.Clear()
             $AdminPwdTextbox.IsEnabled = $false
             $AdminPwdTextbox.Background = "#bdbfc1"
             $AdminTextBox.IsEnabled = $false
@@ -732,7 +735,7 @@ $ConnectButton.Add_Click( {
 
 		#If user is MFA enabled
 		$UserAuthN = Get-MsolUser -UserPrincipalName ($creds).UserName 
-		if(($UserAuthN.StrongAuthenticationMethods) -ne $null){
+		if($UserAuthN.StrongPasswordRequired -eq $true) {
 			Write-Host "You are MFA enabled..." -ForegroundColor Magenta
 			Write-Host "Unfortunately, we don't support users enabled for MFA at this point in time. Try again with a user account not MFA enabled." -ForegroundColor White -BackgroundColor DarkRed
 			$Window.Close()
@@ -765,11 +768,13 @@ $ConnectButton.Add_Click( {
         Import-PSSession $SfBOsession -AllowClobber | Out-Null
 
         #Connect to SPO
-		Write-Host "Connecting to SharePoint Online..." -ForegroundColor Cyan
-        Connect-SPOService -Url https://$SPOTenant-admin.sharepoint.com -Credential $creds
+        Write-Host "Connecting to SharePoint Online..." -ForegroundColor Cyan
+        $creds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ($AdminUserName, $(ConvertTo-SecureString -String $AdminPwdTextbox.Password -AsPlainText -Force))
+        Connect-SPOService -Credential $creds -Url "https://$SPOTenant-admin.sharepoint.com"
 
         #Connect to the Compliance Center
-		Write-Host "Connecting to the Compliance Center..." -ForegroundColor Cyan
+        Write-Host "Connecting to the Compliance Center..." -ForegroundColor Cyan
+        $creds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ($AdminUserName, $(ConvertTo-SecureString -String $AdminPwdTextbox.Password -AsPlainText -Force))
 		$ccSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ -Credential $creds -Authentication Basic -AllowRedirection
 		Import-PSSession $ccSession -Prefix cc -AllowClobber | Out-Null
 
@@ -941,7 +946,7 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveGAFileDialog.ShowDialog() -eq 'OK') {
-                    (Get-MsolRoleMember -RoleObjectId $GARoleObjectId) | Select-Object DisplayName, EmailAddress, IsLicensed | Export-Csv $($SaveGAFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    Get-MsolRoleMember -RoleObjectId $GARoleObjectId | Select-Object DisplayName, EmailAddress, IsLicensed | Export-Csv $($SaveGAFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
 
@@ -1625,8 +1630,18 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveAllSCFileDialog.ShowDialog() -eq 'OK') {
-                    Get-SPOSite -Limit All| Select-Object Title, url, StorageLimit, StorageUsed, Owner, LockState, Template, ConditionalAccessPolicy |
-                        Export-Csv $($SaveAllSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    Get-SPOSite -Limit All | `
+                        Select-Object `
+                            @{N='Title';E={$_.Title}}, `
+                            @{N='Url';E={$_.Url}}, `
+                            @{N='StorageLimit';E={(($_.StorageQuota) / 1024).ToString("N")}}, `
+                            @{N='StorageUsed';E={(($_.StorageUsageCurrent) / 1024).ToString("N")}}, `
+                            @{N='Owner';E={$_.Owner}}, `
+                            @{N='SharingCapability';E={$_.SharingCapability}}, `
+                            @{N='LockState';E={$_.LockState}}, `
+                            @{N='Template';E={$_.Template}}, `
+                            @{N='ConditionalAccessPolicy';E={$_.ConditionalAccessPolicy}} | `
+                                Export-Csv $($SaveAllSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
 
@@ -1734,8 +1749,17 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveAllPersoSCFileDialog.ShowDialog() -eq 'OK') {
-                    Get-SPOSite -Limit All -IncludePersonalSite $true | Where-Object {$_.Url -like "*/personal*"} | Select-Object Title, Url, StorageLimit, StorageUsed, Owner, SharingCapability, LockState, Template |
-                        Export-Csv $($SaveAllPersoSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    Get-SPOSite -Limit All -IncludePersonalSite $true | `
+                        Where-Object {$_.Url -like "*/personal*"} | `
+                            Select-Object `
+                                @{N='Title';E={$_.Title}}, `
+                                @{N='StorageLimit';E={(($_.StorageQuota) / 1024).ToString("N")}}, `
+                                @{N='StorageUsed';E={(($_.StorageUsageCurrent) / 1024).ToString("N")}}, `
+                                @{N='Owner';E={$_.Owner}}, `
+                                @{N='SharingCapability';E={$_.SharingCapability}}, `
+                                @{N='LockState';E={$_.LockState}}, `
+                                @{N='Template';E={$_.Template}} | `
+                                    Export-Csv $($SaveAllPersoSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
 #endregion
@@ -1935,6 +1959,4 @@ $DisconnectButton.Add_Click( {
 #endregion
 
 #Show the GUI
-$Window.ShowDialog()
-
-
+$Window.ShowDialog() | Out-Null
