@@ -586,7 +586,7 @@ $ExportSkypeUsersButton = $Window.findname('ExportSkypeUsersButton')
 
 
 #Focus on AdminTextBox when Window loads
-$AdminTextBox.Focus()
+$AdminTextBox.Focus() | Out-Null
 
 
 #Enable the "Connect" button if text is entered in the $AdminTextBox
@@ -1936,6 +1936,6 @@ $DisconnectButton.Add_Click( {
 #endregion
 
 #Show the GUI
-$Window.ShowDialog()
+$Window.ShowDialog() | Out-Null
 
 
