@@ -647,6 +647,16 @@ $ConnectButton.Add_Click( {
 		}
 		else{
 			Write-Host "Microsoft Online Module present. OK." -ForegroundColor Green
+        }
+        
+        #Check if Azure AD Powershell module present
+		if (!(Get-Module -ListAvailable -Name "AzureAD")){
+			Write-Host "Microsoft Azure AD Graph API Powershell Module not present. Please download it via  'Install-Module AzureAD' (Powershell 5.x or visit https://www.powershellgallery.com/packages/AzureAD/2.0.1.16) " -ForegroundColor Red
+			$Window.Close()
+			break
+		}
+		else{
+			Write-Host "Microsoft Azure AD Graph API Powershell Module present. OK." -ForegroundColor Green
 		}
 
 		#Check if SharePoint Online module present
