@@ -2,12 +2,14 @@
 O365 Data Retriever - Release 0.1.0 (Aug 22nd, 2018)
 #>
 
+Set-StrictMode -Version Latest
+
 #Load the Assemblies
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, system.windows.forms
 
 #Refer to the XAML file
 [string]$xamlContent = Get-Content $(Join-Path -Path $PSScriptRoot -ChildPath 'MainWindow.xaml' )
-[xml]$xml = $xamlContent.Replace('{0}',$PSScriptRoot) 
+[xml]$xml = $xamlContent.Replace('{0}',$PSScriptRoot)
 $xamlFile = $xml
 
 #Read & Load the xaml file
@@ -18,6 +20,22 @@ $Window = [Windows.Markup.XamlReader]::Load( $reader )
 ##################
 # START SCRIPTING
 ##################
+
+[bool]$opt = $true
+function TimerStart
+{
+    Param(
+        [String] $str
+    )
+    Write-Host $str -ForegroundColor White
+    $script:StartTime = Get-Date
+}
+function TimerEnd
+{
+    $script:EndTime = Get-Date
+    $script:DeltaTime = $script:EndTime - $script:StartTime
+    Write-Host "......elapsed $( $DeltaTime.Minutes ) minutes and $( $DeltaTime.Seconds ) seconds" -ForegroundColor White
+}
 
 #region FUNCTION New-WPFMessageBox
 Function New-WPFMessageBox {
@@ -217,6 +235,7 @@ Function New-WPFMessageBox {
         $AttributeCollection.Add($ValidateSetAttribute)
         $RuntimeParameter = New-Object System.Management.Automation.RuntimeDefinedParameter($Sound, [string], $AttributeCollection)
         $RuntimeParameterDictionary.Add($Sound, $RuntimeParameter)
+
         return $RuntimeParameterDictionary
     }
     Begin {
@@ -311,6 +330,8 @@ Function New-WPFMessageBox {
                 })
             $Window.FindName('ButtonHost').AddChild($Button)
         }
+
+        [Object] $DispatcherTimer = $null ## will be set to proper type if declared/used
 
         # Add buttons
         If ($ButtonType -eq "OK") {
@@ -440,7 +461,7 @@ Function New-WPFMessageBox {
         }
 
         # Play a sound
-        If ($($PSBoundParameters.Sound)) {
+        If ($($PSBoundParameters[ 'Sound' ])) {
             $SoundFile = "$env:SystemDrive\Windows\Media\$($PSBoundParameters.Sound).wav"
             $SoundPlayer = New-Object System.Media.SoundPlayer -ArgumentList $SoundFile
             $SoundPlayer.Add_LoadCompleted( {
@@ -692,7 +713,7 @@ $ConnectButton.Add_Click( {
 			$GARoleMember = Get-MsolRoleMember -RoleObjectId $GlobalAdminRoleObjectId
 
 			if ($userLogged -in ($GARoleMember.EmailAddress)){
-				Write-Host "You are a Global Admin. OK." -ForegroundColor White
+				Write-Host "You are a Global Admin. OK." -ForegroundColor Green ## Green to match all other "OK" instead of White
 			}
 			else{
 				Write-Host "You are not a Global Admin! Release 0.1.0 is only available for Global Admins. Please try again with the correct account." -ForegroundColor White -BackgroundColor DarkRed
@@ -769,7 +790,8 @@ $ConnectButton.Add_Click( {
         Import-PSSession $EXOsession -AllowClobber | Out-Null
 
         #Need to run the cmdlet now (after connection to EXO) to get the $SPOTenant variable assigned to the connection to SPO
-        [System.String]$Tenant = Get-OrganizationConfig | Select-Object -ExpandProperty Name
+        $msolOrgConfig = Get-OrganizationConfig
+        [System.String]$Tenant = $msolOrgConfig | Select-Object -ExpandProperty Name
         $SPOTenant = $Tenant.Replace(".onmicrosoft.com", "")
 
         #Connect to SfBO
@@ -817,9 +839,6 @@ $ConnectButton.Add_Click( {
         $ConnectionUri = 'https://ps.compliance.protection.outlook.com/PowerShell-LiveId'
         if( $userIsMFA )
         {
-            ## you can't pass creds to New-ExoPSSession unless the user is
-            ## from a trusted IP. A sign-in dialog is going to pop-up regardless
-            ## of what you do from anywhere else.
             $ccsession = New-ExoPSSession -UserPrincipalName $creds.Username `
                 -ConnectionUri $ConnectionUri `
                 -AzureADAuthorizationEndpointUri 'https://login.windows.net/common'
@@ -845,13 +864,15 @@ $ConnectButton.Add_Click( {
 
 
         #Declare the variables for the TextBlocks on top of the tool
-        [System.String]$TenantDisplayName = Get-MsolCompanyInformation | Select-Object -ExpandProperty DisplayName
-        [System.String]$TenantCountry = Get-MsolCompanyInformation | Select-Object -ExpandProperty CountryLetterCode
-        [System.String]$TechContact = Get-MsolCompanyInformation | Select-Object -ExpandProperty TechnicalNotificationEmails
-        [System.String]$TechContactPhone = Get-MsolCompanyInformation | Select-Object -ExpandProperty TelephoneNumber
-        $TotalO365Plans = (Get-MsolAccountSku).count
-        $TotalLicensesAllPlans = Get-MsolAccountSku | Measure-Object ActiveUnits -Sum | Select-Object -ExpandProperty Sum
-        $TotalLicensesAssignedAllPlans = Get-MsolAccountSku | Measure-Object ConsumedUnits -Sum | Select-Object -ExpandProperty Sum
+        $msolCompany = Get-MsolCompanyInformation
+        $msolAccount = Get-MsolAccountSku
+        [System.String]$TenantDisplayName = $msolCompany | Select-Object -ExpandProperty DisplayName
+        [System.String]$TenantCountry     = $msolCompany | Select-Object -ExpandProperty CountryLetterCode
+        [System.String]$TechContact       = $msolCompany | Select-Object -ExpandProperty TechnicalNotificationEmails
+        [System.String]$TechContactPhone  = $msolCompany | Select-Object -ExpandProperty TelephoneNumber
+        $TotalO365Plans = $msolAccount.Count
+        $TotalLicensesAllPlans = $msolAccount | Measure-Object ActiveUnits -Sum | Select-Object -ExpandProperty Sum
+        $TotalLicensesAssignedAllPlans = $msolAccount | Measure-Object ConsumedUnits -Sum | Select-Object -ExpandProperty Sum
 
 
         #Display info on top of the tool -- All TextBlocks (x13)
@@ -860,15 +881,15 @@ $ConnectButton.Add_Click( {
         $CountryTextBlock.Text = $TenantCountry
         $TechContactTextBlock.Text = $TechContact
         $ContactPhoneNbrTextBlock.Text = $TechContactPhone
-        $TotalNbrPlansTextBlock.Text = $TotalO365Plans
+        $TotalNbrPlansTextBlock.Text = $TotalO365Plans.ToString( 'n0' )
         $TotalNbrPlansTextBlock.Foreground = "Green"
-        $TotalLicensesTextBlock.Text = $TotalLicensesAllPlans
+        $TotalLicensesTextBlock.Text = $TotalLicensesAllPlans.ToString( 'n0' )
         $TotalLicensesTextBlock.Foreground = "Green"
-        $TotalAssignedLicensesTextBlock.Text = $TotalLicensesAssignedAllPlans
+        $TotalAssignedLicensesTextBlock.Text = $TotalLicensesAssignedAllPlans.ToString( 'n0' )
         $TotalAssignedLicensesTextBlock.Foreground = "Green"
 
         #Check if DirSync is enabled or not
-        [System.String]$DirSyncEnabled = Get-MsolCompanyInformation | Select-Object -ExpandProperty DirectorySynchronizationEnabled
+        [System.String]$DirSyncEnabled = $msolCompany | Select-Object -ExpandProperty DirectorySynchronizationEnabled
         if ($DirSyncEnabled -eq $true) {
             $DirSyncEnabledTextBlock.Text = "Yes"
             $DirSyncEnabledTextBlock.Foreground = "Green"
@@ -879,7 +900,7 @@ $ConnectButton.Add_Click( {
         }
 
         #Check if PasswordSync is enabled or not
-        [System.String]$PwdSyncEnabled = Get-MsolCompanyInformation | Select-Object -ExpandProperty PasswordSynchronizationEnabled
+        [System.String]$PwdSyncEnabled = $msolCompany | Select-Object -ExpandProperty PasswordSynchronizationEnabled
         if ($PwdSyncEnabled -eq $true) {
             $PwdSyncEnabledTextBlock.Text = "Yes"
             $PwdSyncEnabledTextBlock.Foreground = "Green"
@@ -890,32 +911,37 @@ $ConnectButton.Add_Click( {
         }
 
         #Check Last DirSync Time
-        $LastDirSyncTime = Get-MsolCompanyInformation | Select-Object -ExpandProperty LastDirSyncTime
+        $LastDirSyncTime = $msolCompany | Select-Object -ExpandProperty LastDirSyncTime
         if ($DirSyncEnabled -eq $true) {
-            $LastDirSyncTimeTextBlock.Text = ($LastDirSyncTime).DateTime
+            ## use a date format that will fit in the window
+            $LastDirSyncTimeTextBlock.Text = Get-Date -Format u -Date $LastDirSyncTime.DateTime
         }
         else {
             $LastDirSyncTimeTextBlock.Text = "N/A"
         }
 
         #Check Last DirSync Password Sync Time
-        $LastPwdSyncTime = Get-MsolCompanyInformation | Select-Object -ExpandProperty LastPasswordSyncTime
+        $LastPwdSyncTime = $msolCompany | Select-Object -ExpandProperty LastPasswordSyncTime
         if ($PwdSyncEnabled -eq $true) {
-            $LastPwdSyncTimeTextBlock.Text = ($LastPwdSyncTime).DateTime
+            ## use a date format that will fit in the window
+            $LastPwdSyncTimeTextBlock.Text = Get-Date -Format u -Date $LastPwdSyncTime.DateTime
         }
         else {
             $LastPwdSyncTimeTextBlock.Text = "N/A"
         }
 
         #Check for status of features release in tenant
-        [System.String]$FeaturesRelease = Get-OrganizationConfig | Select-Object -ExpandProperty ReleaseTrack
+        [System.String]$FeaturesRelease = $msolOrgConfig | Select-Object -ExpandProperty ReleaseTrack
         $FeaturesReleaseTextBlock.Text = $FeaturesRelease
 
 #endregion of Top block of the tool
 
 #region TENANT TAB
         #Domains
-		$TenantDomains = Get-MsolDomain
+        TimerStart "...domains"
+        $TenantDomains = Get-MsolDomain
+if( -not $opt )
+{
         $DomainsResults = @()
         foreach ($Domain in $TenantDomains) {
             $DomainProps = @{
@@ -945,12 +971,48 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveDomainsFileDialog.ShowDialog() -eq 'OK') {
-                    Get-MsolDomain | Select-Object Name, IsDefault, Status, Authentication | Export-Csv $($SaveDomainsFileDialog.FileName) -NoTypeInformation -Encoding UTF8
+                    $TenantDomains | Select-Object Name, IsDefault, Status, Authentication | Export-Csv $($SaveDomainsFileDialog.FileName) -NoTypeInformation -Encoding UTF8
                 }
             })
+}
+else
+{
+        $script:DomainsResults = $TenantDomains |
+            Select-Object Name,
+                IsDefault,
+                Status,
+                Authentication
+
+        $NbrOfDomainsTextBlock.Text = $DomainsResults.Count
+        $NbrOfDomainsTextBlock.Foreground = "Red"
+        $DomainsDataGrid.ItemsSource = $DomainsResults
+
+
+        #Export Domains
+        $ExportDomainsButton.Add_Click( {
+                # Show the "Save As" dialog window and define a default location (on the Desktop...)
+                [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+                $SaveDomainsFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+                $SaveDomainsFileDialog.InitialDirectory = "C:\$env:USERNAME\Desktop\"
+                $SaveDomainsFileDialog.Filter = "CSV Files (*.csv)|*.csv|Text Files (*.txt)|*.txt|Excel Worksheet (*.xls)|*.xls|All Files (*.*)|*.*"
+                $SaveDomainsFileDialog.SupportMultiDottedExtensions = $true
+                $SaveDomainsFileDialog.FileName
+
+                # Save the file...
+                if ($SaveDomainsFileDialog.ShowDialog() -eq 'OK') {
+                    $script:DomainsResults | 
+                        Export-Csv $($SaveDomainsFileDialog.FileName) -NoTypeInformation -Encoding UTF8
+                }
+            })
+}
+
+        TimerEnd
 
         #Plans
-		$Plans = Get-MsolSubscription
+        TimerStart "...plans"
+        $Plans = Get-MsolSubscription
+if( -not $opt )
+{
 		$PlansResults = @()
 		foreach($plan in $Plans){
 			$PlanProps = @{
@@ -979,18 +1041,51 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SavePlansFileDialog.ShowDialog() -eq 'OK') {
-                    Get-MsolSubscription | Select-Object SkuPartNumber, TotalLicenses, IsTrial, Status | Export-Csv $($SavePlansFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    $Plans | Select-Object SkuPartNumber, TotalLicenses, IsTrial, Status | Export-Csv $($SavePlansFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                }
+            })
+}
+else
+{
+        $script:PlansResults = $Plans |
+            Select-Object SkuPartNumber,
+                TotalLicenses,
+                IsTrial,
+                Status
+
+        $NbrOfPlansTextBlock.Text = $PlansResults.Count
+        $NbrOfPlansTextBlock.Foreground = "Red"
+        $PlansDataGrid.ItemsSource = $PlansResults
+
+        #Export Plans
+        $ExportPlansButton.add_Click( {
+                # Show the "Save As" dialog window and define a default location (on the Desktop...)
+                [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+                $SavePlansFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+                $SavePlansFileDialog.InitialDirectory = "C:\$env:USERNAME\Desktop\"
+                $SavePlansFileDialog.Filter = "CSV Files (*.csv)|*.csv|Text Files (*.txt)|*.txt|Excel Worksheet (*.xls)|*.xls|All Files (*.*)|*.*"
+                $SavePlansFileDialog.SupportMultiDottedExtensions = $true
+                $SavePlansFileDialog.FileName
+
+                # Save the file...
+                if ($SavePlansFileDialog.ShowDialog() -eq 'OK') {
+                    $script:PlansResults | Export-Csv $($SavePlansFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
 
-        #Global Admins 
-        $GArole = Get-MsolRole -RoleName "Company Administrator"
+}
+        TimerEnd
+
+        #Global Admins
+        TimerStart "...global admins"
+        $GArole         = Get-MsolRole -RoleName "Company Administrator"
         $GARoleObjectId = ($GArole).ObjectId
-        $GARoleCount = (Get-MsolRoleMember -RoleObjectId $GARoleObjectId).count
+        $globalAdmins   = Get-MsolRoleMember -RoleObjectId $GARoleObjectId
+        $GARoleCount    = $globalAdmins.Count
         $NbrOfGATextBlock.Text = $GARoleCount
         $NbrOfGATextBlock.Foreground = "Red"
-        $GlobalAdmins = Get-MsolRoleMember -RoleObjectId $GARoleObjectId | Select-Object DisplayName, EmailAddress, IsLicensed
-        $GADataGrid.ItemsSource = $GlobalAdmins
+        $script:GlobalAdminLst = $globalAdmins | Select-Object DisplayName, EmailAddress, IsLicensed
+        $GADataGrid.ItemsSource = $GlobalAdminLst
 
         #Export GA
         $ExportGAButton.add_Click( {
@@ -1004,25 +1099,29 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveGAFileDialog.ShowDialog() -eq 'OK') {
-                    (Get-MsolRoleMember -RoleObjectId $GARoleObjectId) | Select-Object DisplayName, EmailAddress, IsLicensed | Export-Csv $($SaveGAFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    $script:GlobalAdminLst | Export-Csv $($SaveGAFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
 
+        TimerEnd
+
         #At a Glance section (right side)
-        $AllUsers = (Get-MsolUser -All).count
-        $NbrOfUsersTextBlock.Text = $AllUsers
+        TimerStart "...at a glance, users"
+        $msolUsers = Get-MsolUser -All
+        $AllUsers  = $msolUsers.Count
+        $NbrOfUsersTextBlock.Text = $AllUsers.ToString( 'n0' )
 
-        $SyncedUsers = Get-MsolUser -All | Where-Object {$_.ImmutableId -ne $null}
-        $NbrOfSyncedUsersTextBlock.Text = ($SyncedUsers).count
+        $SyncedUsers = $msolUsers | Where-Object {$_.ImmutableId -ne $null}
+        $NbrOfSyncedUsersTextBlock.Text = $SyncedUsers.Count.ToString( 'n0' )
 
-        $CloudUsers = Get-MsolUser -All | Where-Object {$_.ImmutableId -eq $null}
-        $NbrOfCloudUsersTextBlock.Text = ($CloudUsers).count
+        $CloudUsers = $msolUsers | Where-Object {$_.ImmutableId -eq $null}
+        $NbrOfCloudUsersTextBlock.Text = $CloudUsers.Count.ToString( 'n0' )
 
-        $BlockedUsers = Get-MsolUser -All | Where-Object {$_.BlockCredential -eq $true -and $_.IsLicensed -eq $false}
-        $NbrOfBlockedUsersTextBlock.Text = ($BlockedUsers).count
+        $BlockedUsers = $msolUsers | Where-Object {$_.BlockCredential -eq $true -and $_.IsLicensed -eq $false}
+        $NbrOfBlockedUsersTextBlock.Text = $BlockedUsers.Count.ToString( 'n0' )
 
-        $LicensedAndBlockedUsers = Get-MsolUser -All | Where-Object {$_.IsLicensed -eq $true -and $_.BlockCredential -eq $true}
-        $NbrOfBlockedAndLicensedUsersTextBlock.Text = ($LicensedAndBlockedUsers).count
+        $LicensedAndBlockedUsers = $msolUsers | Where-Object {$_.IsLicensed -eq $true -and $_.BlockCredential -eq $true}
+        $NbrOfBlockedAndLicensedUsersTextBlock.Text = $LicensedAndBlockedUsers.Count.ToString( 'n0' )
         if (($LicensedAndBlockedUsers).count -gt 0) {
             $NbrOfBlockedAndLicensedUsersTextBlock.Foreground = "Red"
         }
@@ -1031,32 +1130,46 @@ $ConnectButton.Add_Click( {
         }
 
         $AllContacts = (Get-MsolContact -All).count
-        $NbrOfContactsTextBlock.Text = $AllContacts
+        $NbrOfContactsTextBlock.Text = $AllContacts.ToString( 'n0' )
 
-        $AllGuests = (Get-MsolUser -All | Where-Object {$_.UserType -eq "Guest"}).count
+        $AllGuests = ($msolUsers | Where-Object {$_.UserType -eq "Guest"}).Count.ToString( 'n0' )
         $NbrOfGuestsTextBlock.Text = $AllGuests
 
         $AllGroups = Get-MsolGroup -All
-        $NbrOfGroupsTextBlock.Text = ($AllGroups).count
+        $NbrOfGroupsTextBlock.Text = ($AllGroups).Count.ToString( 'n0' )
+
+        TimerEnd
+        TimerStart "...at a glance, mailboxes"
 
         $AllSharedMlbx = Get-Mailbox -RecipientTypeDetails SharedMailbox -ResultSize Unlimited | Measure-Object
-        $NbrOfShdMlbxTtextBlock.Text = ($AllSharedMlbx).count
+        $NbrOfShdMlbxTtextBlock.Text = ($AllSharedMlbx).Count.ToString( 'n0' )
 
         $AllRooms = Get-Mailbox -RecipientTypeDetails RoomMailbox -ResultSize Unlimited | Measure-Object
-        $NbrofRoomsTextBlock.Text = ($AllRooms).count
+        $NbrofRoomsTextBlock.Text = ($AllRooms).Count.ToString( 'n0' )
 
         $AllEquipments = Get-Mailbox -RecipientTypeDetails EquipmentMailbox -ResultSize Unlimited | Measure-Object
-        $NbrOfEquipTextBlock.Text = ($AllEquipments).count
+        $NbrOfEquipTextBlock.Text = ($AllEquipments).Count.ToString( 'n0' )
+
+        TimerEnd
 #endregion
 
 #region EXO TAB
 
         #RECIPIENT tab
+        TimerStart "...mailboxes and resources"
         #Mailboxes & Resources
-        $AllMlbxAndResources = Get-Mailbox -ResultSize Unlimited | Select-Object DisplayName, UserPrincipalName, RecipientTypeDetails, PrimarySmtpAddress, `
-								ArchiveStatus, ArchiveQuota, AuditEnabled, IsDirSynced, IsShared
+        $script:AllMlbxAndResources = Get-Mailbox -ResultSize Unlimited | 
+            Select-Object DisplayName,
+                UserPrincipalName,
+                RecipientTypeDetails,
+                PrimarySmtpAddress,
+                ArchiveStatus,
+                ArchiveQuota,
+                AuditEnabled,
+                IsDirSynced,
+                IsShared
 
-        $MlbxAndResourcesTotalTextBlock.Text = ($AllMlbxAndResources).Count
+        $MlbxAndResourcesTotalTextBlock.Text = $AllMlbxAndResources.Count.ToString( 'n0' )
         $MlbxAndResourcesTotalTextBlock.Foreground = "Red"
         $MlbxAndResourcesDataGrid.ItemsSource = $AllMlbxAndResources
 
@@ -1072,15 +1185,18 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveMlbxAndResFileDialog.ShowDialog() -eq 'OK') {
-                   Get-Mailbox -ResultSize Unlimited | Select-Object DisplayName, UserPrincipalName, RecipientTypeDetails, `
-                            PrimarySmtpAddress, ArchiveStatus, ArchiveQuota, AuditEnabled, IsDirSynced, IsShared |
+                    $script:AllMlbxAndResources |
                         Export-Csv $($SaveMlbxAndResFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
 
+        TimerEnd
 
         #Groups 
-        $AllGroups = Get-MsolGroup -All
+        TimerStart "...groups"
+if( -not $opt )
+{        
+        ## $AllGroups = Get-MsolGroup -All  ## already set
         $AllGroupsResults = @()
         foreach ($Group in $AllGroups) {
             $GroupsProps = @{
@@ -1109,12 +1225,47 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveAllGroupsFileDialog.ShowDialog() -eq 'OK') {
-                    Get-MsolGroup -All | Select-Object DisplayName, EmailAddress, GroupType | Export-Csv $($SaveAllGroupsFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    $AllGroups | Select-Object DisplayName, EmailAddress, GroupType | Export-Csv $($SaveAllGroupsFileDialog.filename) -NoTypeInformation -Encoding UTF8
                     }
             })
+}
+else
+{
+        ## $AllGroups = Get-MsolGroup -All  ## already set
+        $script:AllGroupsResults = $AllGroups | 
+            Select-Object DisplayName,
+                EmailAddress,
+                GroupType
 
+        $GroupsTextBlock.Text = $AllGroupsResults.Count
+        $GroupsTextBlock.Foreground = "Red"
+        $GroupsDataGrid.ItemsSource = $AllGroupsResults
+
+
+        #Export Groups
+        $ExportGroupsButton.add_Click( {
+                # Show the "Save As" dialog window and define a default location (on the Desktop...)
+                [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+                $SaveAllGroupsFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+                $SaveAllGroupsFileDialog.InitialDirectory = "C:\$env:USERNAME\Desktop\"
+                $SaveAllGroupsFileDialog.Filter = "CSV Files (*.csv)|*.csv|Text Files (*.txt)|*.txt|Excel Worksheet (*.xls)|*.xls|All Files (*.*)|*.*"
+                $SaveAllGroupsFileDialog.SupportMultiDottedExtensions = $true
+                $SaveAllGroupsFileDialog.FileName
+
+                # Save the file...
+                if ($SaveAllGroupsFileDialog.ShowDialog() -eq 'OK') {
+                    $script:AllGroupsResults | 
+                        Export-Csv $($SaveAllGroupsFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    }
+            })
+    
+}
+        TimerEnd
 
         #Contacts
+        TimerStart "...contacts"
+if( -not $opt )
+{
         $ContactsResults = @()
         $AllContacts = Get-Contact -ResultSize Unlimited
 
@@ -1152,9 +1303,45 @@ $ConnectButton.Add_Click( {
                         Export-Csv $($SaveAllContactsFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
+}
+else
+{
+        $AllContacts = Get-Contact -ResultSize Unlimited
+        $script:ContactsResults = $AllContacts |
+            Select-Object DisplayName,
+                Company,
+                Title,
+                CountryorRegion,
+                PostalCode,
+                IsDirSynced,
+                RecipientTypeDetails
+
+        $AllContactsTextBlock.Text = $ContactsResults.Count
+        $AllContactsTextBlock.Foreground = "Red"
+        $ContactsDataGrid.ItemsSource = $ContactsResults
+
+        #Export Contacts
+        $ExportContactsButton.add_Click( {
+                # Show the "Save As" dialog window and define a default location (on the Desktop...)
+                [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+                $SaveAllContactsFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+                $SaveAllContactsFileDialog.InitialDirectory = "C:\$env:USERNAME\Desktop\"
+                $SaveAllContactsFileDialog.Filter = "CSV Files (*.csv)|*.csv|Text Files (*.txt)|*.txt|Excel Worksheet (*.xls)|*.xls|All Files (*.*)|*.*"
+                $SaveAllContactsFileDialog.SupportMultiDottedExtensions = $true
+                $SaveAllContactsFileDialog.FileName
+
+                # Save the file...
+                if ($SaveAllContactsFileDialog.ShowDialog() -eq 'OK') {
+                    $script:ContactsResults |
+                        Export-Csv $($SaveAllContactsFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                }
+            })
+}
+        TimerEnd
 
         #PERMISSIONS tab
         #Admin Roles
+        TimerStart "...admin roles"
         $AdminRolesPerm = Get-RoleGroup -ResultSize Unlimited 
         $AdminRolesResults = @()
 		
@@ -1189,8 +1376,10 @@ $ConnectButton.Add_Click( {
                 }
             })
 
+        TimerEnd
 
         #User Roles 
+        TimerStart "...user roles"
 		$ExoUserRoles = Get-RoleAssignmentPolicy
 		$UserRolesResults = @()
 
@@ -1225,7 +1414,9 @@ $ConnectButton.Add_Click( {
                 }
             })
 
+        TimerEnd
 
+        TimerStart "...policies and filters"
         #OWA Policies
 		$OWAPolicies = Get-OwaMailboxPolicy
 		$OWAPoliciesResults = @()
@@ -1416,9 +1607,12 @@ $ConnectButton.Add_Click( {
                 }
             })
 
+        TimerEnd
+
 
         #MAIL FLOW tab
         #Rules
+        TimerStart "...transport rules"
         $TransportRules = Get-TransportRule | Select-Object Name, State, Mode, Priority, Comments, ActivationDate, ExpiryDate
         $NbrOfRulesTextBlock.Text = ($TransportRules).Count
         $NbrOfRulesTextBlock.Foreground = "Red"
@@ -1441,8 +1635,11 @@ $ConnectButton.Add_Click( {
                 }
             })
 
+        TimerEnd
+
 
         #Accepted Domains
+        TimerStart "...accepted domains"
 		$AcceptedDomains = Get-AcceptedDomain
 		$AcceptedDomainsResults = @()
 		
@@ -1479,8 +1676,12 @@ $ConnectButton.Add_Click( {
                 }
             })
 
+        TimerEnd
+
 
         #Remote Domains
+        TimerStart "...remote domains"
+
         $RemoteDomainsResults = @()
         $RemoteDomains = Get-RemoteDomain
 
@@ -1520,8 +1721,11 @@ $ConnectButton.Add_Click( {
                 }
             })
 
-	
+        TimerEnd
+
+
         #MOBILE DEVICES tab
+        TimerStart "...device information"
         #Quarantined Devices
         $DevicesResults = @()
         $QuarantinedDevices = Get-MobileDevice -ResultSize Unlimited | Where-Object {$_.DeviceAccessState -eq "Quarantined"}
@@ -1534,12 +1738,12 @@ $ConnectButton.Add_Click( {
 				$DeviceProps = @{
                     Name              = $DeviceUserName
                     FriendlyName      = $QuarantinedDevices.FriendlyName
-                    DeviceOS       = $QuarantinedDevices.DeviceOS
-                    DeviceAccessState   = $QuarantinedDevices.DeviceAccessState
-                    IsManaged           = $QuarantinedDevices.IsManaged
-                    IsCompliant         = $QuarantinedDevices.IsCompliant
-                    IsDisabled          = $QuarantinedDevices.IsDisabled
-                    WhenCreated = $QuarantinedDevices.WhenCreated
+                    DeviceOS          = $QuarantinedDevices.DeviceOS
+                    DeviceAccessState = $QuarantinedDevices.DeviceAccessState
+                    IsManaged         = $QuarantinedDevices.IsManaged
+                    IsCompliant       = $QuarantinedDevices.IsCompliant
+                    IsDisabled        = $QuarantinedDevices.IsDisabled
+                    WhenCreated       = $QuarantinedDevices.WhenCreated
                 }
                 $DevicesResults += New-Object PSObject -Property $DeviceProps
             }
@@ -1648,6 +1852,7 @@ $ConnectButton.Add_Click( {
                 }
             })
 
+        TimerEnd
 #endregion
 
 #region SPO TAB
@@ -1655,7 +1860,10 @@ $ConnectButton.Add_Click( {
     ## fix indent at some point
     if( $gotSPO )
     {
-		#Site Collections tab
+        #Site Collections tab
+        TimerStart "...SPO sites"
+if( -not $opt )
+{
 		$SPOSiteCollectionsResults = @()
 		$SPOSiteCollections = Get-SPOSite -Limit All
 
@@ -1663,7 +1871,7 @@ $ConnectButton.Add_Click( {
 			$SCProps = @{
 				Title = $site.Title
 				Url = $site.Url
-				StorageLimit = (($site.StorageQuota) / 1024).ToString("N")
+				StorageLimit = (($site.StorageQuota) / 1024).ToString("N0")
 				StorageUsed = (($site.StorageUsageCurrent) / 1024).ToString("N")
 				Owner = $site.Owner
 				SharingCapability = $site.SharingCapability
@@ -1695,39 +1903,81 @@ $ConnectButton.Add_Click( {
                         Export-Csv $($SaveAllSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
+}
+else
+{
+        $script:SPOSiteCollections = Get-SPOSite -Limit All |
+            Select-Object Title,
+                Url,
+                @{ N = 'StorageLimit'; E = { ( $_.StorageQuota / 1024 ).ToString( 'n0') } },
+                @{ N = 'StorageUsed' ; E = { ( $_.StorageUsageCurrent / 1024 ).ToString( 'n') } },
+                Owner,
+                SharingCapability,
+                LockState,
+                Template,
+                ConditionalAccessPolicy
 
-		#SPO At A Glance section
-		$SPOTotalOfSCTextBlock.Text = (Get-SPOSite -Limit All -IncludePersonalSite $true).Count
+        $NbrOfSiteColTextBlock.Text = $SPOSiteCollections.Count
+        $NbrOfSiteColTextBlock.Foreground = "Red"
+        $NbrOfSiteColDataGrid.ItemsSource = $SPOSiteCollections
+
+        #Export All Site Collections
+        $ExportAllSCButton.add_Click( {
+                # Show the "Save As" dialog window and define a default location (on the Desktop...)
+                [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+                $SaveAllSCFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+                $SaveAllSCFileDialog.InitialDirectory = "C:\$env:USERNAME\Desktop\"
+                $SaveAllSCFileDialog.Filter = "CSV Files (*.csv)|*.csv|Text Files (*.txt)|*.txt|Excel Worksheet (*.xls)|*.xls|All Files (*.*)|*.*"
+                $SaveAllSCFileDialog.SupportMultiDottedExtensions = $true
+                $SaveAllSCFileDialog.FileName
+
+                # Save the file...
+                if ($SaveAllSCFileDialog.ShowDialog() -eq 'OK') {
+                    $script:SPOSiteCollections |
+                        Export-Csv $($SaveAllSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                }
+            })
+}
+        TimerEnd
+
+        #SPO At A Glance section
+        TimerStart "...SPO sites at a glance"
+        $allSPOsitesWithPersonal = Get-SPOSite -Limit All -IncludePersonalSite $true
+        $spoTenant = Get-SPOTenant
+		$SPOTotalOfSCTextBlock.Text = $allSPOsitesWithPersonal.Count
         $SPOTotalOfSCTextBlock.Foreground = "Green"
-		$SPOTotalStorageTextBlock.Text = (((Get-SPOTenant).StorageQuota / 1024) / 1024).ToString("N") ## Number in TB
+		$SPOTotalStorageTextBlock.Text = (($spoTenant.StorageQuota / 1024) / 1024).ToString("N") ## Number in TB
         $SPOTotalStorageTextBlock.Foreground = "Green"
-		$SPOTotalStorageAllocatedTextBlock.Text = ((Get-SPOTenant).StorageQuotaAllocated / 1024).ToString("N") ## Number in GB
+		$SPOTotalStorageAllocatedTextBlock.Text = ($spoTenant.StorageQuotaAllocated / 1024).ToString("N") ## Number in GB
 		$SPOTotalStorageAllocatedTextBlock.Foreground = "Green"
-		$SPOTotalServerResourcesTextBlock.Text = (Get-SPOTenant).ResourceQuota
+		$SPOTotalServerResourcesTextBlock.Text = $spoTenant.ResourceQuota
 		$SPOTotalServerResourcesTextBlock.Foreground = "Green"
-		$SPOTotalResourcesAllocatedTextBlock.Text = (Get-SPOTenant).ResourceQuotaAllocated
+		$SPOTotalResourcesAllocatedTextBlock.Text = $spoTenant.ResourceQuotaAllocated
 		$SPOTotalResourcesAllocatedTextBlock.Foreground = "Green"
-		$SPOSharingCapabilityTextBlock.Text = (Get-SPOTenant).SharingCapability
+		$SPOSharingCapabilityTextBlock.Text = $spoTenant.SharingCapability
 		$SPOSharingCapabilityTextBlock.Foreground = "Green"
-		$SPOExternalUsersInviteSameAcctTextBlock.Text = (Get-SPOTenant).RequireAcceptingAccountMatchInvitedAccount ## True or False
+		$SPOExternalUsersInviteSameAcctTextBlock.Text = $spoTenant.RequireAcceptingAccountMatchInvitedAccount ## True or False
 		$SPOExternalUsersInviteSameAcctTextBlock.Foreground = "Green"
-		$ODFBforGuestEnabledTextBlock.Text = (Get-SPOTenant).OneDriveForGuestsEnabled ##True or False
+		$ODFBforGuestEnabledTextBlock.Text = $spoTenant.OneDriveForGuestsEnabled ##True or False
 		$ODFBforGuestEnabledTextBlock.Foreground = "Green"
-		$SPODefaultSharingLinkTypeTextBlock.Text = (Get-SPOTenant).DefaultSharingLinkType
+		$SPODefaultSharingLinkTypeTextBlock.Text = $spoTenant.DefaultSharingLinkType
 		$SPODefaultSharingLinkTypeTextBlock.Foreground = "Green"
-		$SPOPreventExternalUsersFromResharingTextBlock.Text = (Get-SPOTenant).PreventExternalUsersFromResharing ##True or False
+		$SPOPreventExternalUsersFromResharingTextBlock.Text = $spoTenant.PreventExternalUsersFromResharing ##True or False
 		$SPOPreventExternalUsersFromResharingTextBlock.Foreground = "Green"
-		$FileAnonymousLinkTypeTextBlock.Text = (Get-SPOTenant).FileAnonymousLinkType
+		$FileAnonymousLinkTypeTextBlock.Text = $spoTenant.FileAnonymousLinkType
 		$FileAnonymousLinkTypeTextBlock.Foreground = "Green"
-		$FolderAnonymousLinkTypeTextBlock.Text = (Get-SPOTenant).FolderAnonymousLinkType
+		$FolderAnonymousLinkTypeTextBlock.Text = $spoTenant.FolderAnonymousLinkType
 		$FolderAnonymousLinkTypeTextBlock.Foreground = "Green"
-		$SPONotifyOwnersItemsResharedTextBlock.Text = (Get-SPOTenant).NotifyOwnersWhenItemsReshared ##True or False
+		$SPONotifyOwnersItemsResharedTextBlock.Text = $spoTenant.NotifyOwnersWhenItemsReshared ##True or False
 		$SPONotifyOwnersItemsResharedTextBlock.Foreground = "Green"
-		$SPODefaultLinkPermissionTextBlock.Text = (Get-SPOTenant).DefaultLinkPermission
+		$SPODefaultLinkPermissionTextBlock.Text = $spoTenant.DefaultLinkPermission
 		$SPODefaultLinkPermissionTextBlock.Foreground = "Green"
 
+        TimerEnd
 
-		#Hub Sites tab
+
+        #Hub Sites tab
+        TimerStart "...SPO hub sites"
 		$HubSitesResults = @()
 		$SPOHubsites = Get-SPOHubSite
 
@@ -1762,18 +2012,22 @@ $ConnectButton.Add_Click( {
                 }
             })
 
+        TimerEnd
 #endregion
 
 #region ODFB TAB
 	
-		#Personal Sites tab
+        #Personal Sites tab
+        TimerStart "...SPO personal sites"
+if( -not $opt )
+{        
 		$PersoSiteCollectionsResults = @()
-		$PersoSiteCollections = Get-SPOSite -Limit All -IncludePersonalSite $true | Where-Object {$_.Url -like "*/personal*"}
+		$PersoSiteCollections = $allSPOsitesWithPersonal | Where-Object {$_.Url -like "*/personal*"}
 
 		foreach($PersoSite in $PersoSiteCollections){
 			$PersoSCProps = @{
 				Title = $PersoSite.Title
-				StorageLimit = (($PersoSite.StorageQuota) / 1024).ToString("N")
+				StorageLimit = (($PersoSite.StorageQuota) / 1024).ToString("N0")
 				StorageUsed = (($PersoSite.StorageUsageCurrent) / 1024).ToString("N")
 				Owner = $PersoSite.Owner
 				SharingCapability = $PersoSite.SharingCapability
@@ -1800,15 +2054,55 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveAllPersoSCFileDialog.ShowDialog() -eq 'OK') {
-                    Get-SPOSite -Limit All -IncludePersonalSite $true | Where-Object {$_.Url -like "*/personal*"} | Select-Object Title, Url, StorageLimit, StorageUsed, Owner, SharingCapability, LockState, Template |
+                    $allSPOsitesWithPersonal | Where-Object {$_.Url -like "*/personal*"} | Select-Object Title, Url, StorageLimit, StorageUsed, Owner, SharingCapability, LockState, Template |
                         Export-Csv $($SaveAllPersoSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
-    }
+}
+else
+{
+        $PersonalSiteCollections = $allSPOsitesWithPersonal | 
+            Where-Object { $_.Url -like "*/personal*" }
+        $script:PersonalSites = $PersonalSiteCollections |
+            Select-Object Title,
+                @{ N = 'StorageLimit'; E = { ( $_.StorageQuota / 1024 ).ToString( 'n0' ) } },
+                @{ N = 'StorageUsed';  E = { ( $_.StorageUsageCurrent / 1024 ).ToString( 'n' ) } },
+                Owner,
+                SharingCapability,
+                LockState,
+                Template
+
+        $NbrOfPersoSiteColTextBlock.Text = $PersonalSites.Count
+        $NbrOfPersoSiteColTextBlock.Foreground = "Red"
+        $NbrOfPersoSiteColDataGrid.ItemsSource = $PersonalSites
+
+        #Export All Site Collections
+        $ExportAllPersoSCButton.add_Click( {
+                # Show the "Save As" dialog window and define a default location (on the Desktop...)
+                [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+                $SaveAllPersoSCFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+                $SaveAllPersoSCFileDialog.InitialDirectory = "C:\$env:USERNAME\Desktop\"
+                $SaveAllPersoSCFileDialog.Filter = "CSV Files (*.csv)|*.csv|Text Files (*.txt)|*.txt|Excel Worksheet (*.xls)|*.xls|All Files (*.*)|*.*"
+                $SaveAllPersoSCFileDialog.SupportMultiDottedExtensions = $true
+                $SaveAllPersoSCFileDialog.FileName
+
+                # Save the file...
+                if ($SaveAllPersoSCFileDialog.ShowDialog() -eq 'OK') {
+                    $script:PersonalSites |
+                        Export-Csv $($SaveAllPersoSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                }
+            })
+}
+    } ## if ( $gotSPO )
+
+        TimerEnd
 #endregion
 
 #region SKYPE & TEAMS TAB
 
+        TimerStart "...Skype"
+if( -not $opt )
+{
 		$SkypeUsersResults = @()
 		$SkypeUsers = Get-CsOnlineUser
 
@@ -1849,15 +2143,56 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveSkypeUsersFileDialog.ShowDialog() -eq 'OK') {
-                    Get-CsOnlineUser | Select-Object DisplayName, UserPrincipalName, Enabled, UsageLocation, SipProxyAddress, ProxyAddresses, InterpretedUserType, HideFromAddressLists, EnterpriseVoiceEnabled, EnabledForRichPresence, ArchivingPolicy, TeamsMeetingPolicy, TeamsCallingPolicy, TeamsMessagingPolicy |
+                    $SkypeUsers | Select-Object DisplayName, UserPrincipalName, Enabled, UsageLocation, SipProxyAddress, ProxyAddresses, InterpretedUserType, HideFromAddressLists, EnterpriseVoiceEnabled, EnabledForRichPresence, ArchivingPolicy, TeamsMeetingPolicy, TeamsCallingPolicy, TeamsMessagingPolicy |
                         Export-Csv $($SaveSkypeUsersFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
+}
+else
+{
+        $script:SkypeUsers = Get-CsOnlineUser | 
+            Select-Object DisplayName,
+                UserPrincipalName,
+                Enabled,
+                UsageLocation,
+                SipProxyAddress,
+                @{ N = 'ProxyAddresses'; E = { $_.ProxyAddresses -join "; " } },
+                InterpretedUserType,
+                HideFromAddressLists,
+                EnterpriseVoiceEnabled,
+                EnabledForRichPresence,
+                ArchivingPolicy,
+                TeamsMeetingPolicy,
+                TeamsCallingPolicy,
+                TeamsMessagingPolicy
 
-            $endGather = Get-Date
-            Write-Host "Data gathering complete $endGather"
-            $delta = $endGather - $startGather
-            Write-Host "Data gathering consumed $( $delta.Minutes ) minutes and $( $delta.Seconds ) seconds"
+        $NbrOfSkypeUsersTextBlock.Text = $SkypeUsers.Count.ToString( 'n0' )
+        $NbrOfSkypeUsersTextBlock.Foreground = "Red"
+        $NbrOfSkypeUsersDataGrid.ItemsSource = $SkypeUsers
+
+        #Export Skype Users
+        $ExportSkypeUsersButton.add_Click( {
+                # Show the "Save As" dialog window and define a default location (on the Desktop...)
+                [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+                $SaveSkypeUsersFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+                $SaveSkypeUsersFileDialog.InitialDirectory = "C:\$env:USERNAME\Desktop\"
+                $SaveSkypeUsersFileDialog.Filter = "CSV Files (*.csv)|*.csv|Text Files (*.txt)|*.txt|Excel Worksheet (*.xls)|*.xls|All Files (*.*)|*.*"
+                $SaveSkypeUsersFileDialog.SupportMultiDottedExtensions = $true
+                $SaveSkypeUsersFileDialog.FileName
+
+                # Save the file...
+                if ($SaveSkypeUsersFileDialog.ShowDialog() -eq 'OK') {
+                    $script:SkypeUsers |
+                        Export-Csv $($SaveSkypeUsersFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                }
+            })
+}
+        TimerEnd
+        $endGather = Get-Date
+        Write-Host "Data gathering complete $endGather"
+        $delta = $endGather - $startGather
+        Write-Host "Data gathering consumed $( $delta.Minutes ) minutes and $( $delta.Seconds ) seconds"
+
 #endregion
     }) #end of $ConnectButton.Add_Click
 
@@ -1868,6 +2203,7 @@ $ConnectButton.Add_Click( {
 ###############################
 $DisconnectButton.Add_Click( {
 
+        TimerStart "...disconnecting"
 
 		#Disconnect from EXO and Compliance Center
 		Write-Host "Disconnected from Exchange Online" -ForegroundColor DarkGreen
@@ -1988,6 +2324,8 @@ $DisconnectButton.Add_Click( {
 
         #Disconnect button becomes disabled again...
         $DisconnectButton.IsEnabled = $false
+
+        TimerEnd
 
         #Pop-up window to confirm services disconnected
         $ConfirmationParams = @{
