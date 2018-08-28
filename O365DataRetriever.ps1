@@ -1625,8 +1625,18 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveAllSCFileDialog.ShowDialog() -eq 'OK') {
-                    Get-SPOSite -Limit All| Select-Object Title, url, StorageLimit, StorageUsed, Owner, LockState, Template, ConditionalAccessPolicy |
-                        Export-Csv $($SaveAllSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    Get-SPOSite -Limit All | `
+                        Select-Object `
+                            @{N='Title';E={$_.Title}}, `
+                            @{N='Url';E={$_.Url}}, `
+                            @{N='StorageLimit';E={(($_.StorageQuota) / 1024).ToString("N")}}, `
+                            @{N='StorageUsed';E={(($_.StorageUsageCurrent) / 1024).ToString("N")}}, `
+                            @{N='Owner';E={$_.Owner}}, `
+                            @{N='SharingCapability';E={$_.SharingCapability}}, `
+                            @{N='LockState';E={$_.LockState}}, `
+                            @{N='Template';E={$_.Template}}, `
+                            @{N='ConditionalAccessPolicy';E={$_.ConditionalAccessPolicy}} | `
+                                Export-Csv $($SaveAllSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
 
@@ -1734,8 +1744,17 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveAllPersoSCFileDialog.ShowDialog() -eq 'OK') {
-                    Get-SPOSite -Limit All -IncludePersonalSite $true | Where-Object {$_.Url -like "*/personal*"} | Select-Object Title, Url, StorageLimit, StorageUsed, Owner, SharingCapability, LockState, Template |
-                        Export-Csv $($SaveAllPersoSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    Get-SPOSite -Limit All -IncludePersonalSite $true | `
+                        Where-Object {$_.Url -like "*/personal*"} | `
+                            Select-Object `
+                                @{N='Title';E={$_.Title}}, `
+                                @{N='StorageLimit';E={(($_.StorageQuota) / 1024).ToString("N")}}, `
+                                @{N='StorageUsed';E={(($_.StorageUsageCurrent) / 1024).ToString("N")}}, `
+                                @{N='Owner';E={$_.Owner}}, `
+                                @{N='SharingCapability';E={$_.SharingCapability}}, `
+                                @{N='LockState';E={$_.LockState}}, `
+                                @{N='Template';E={$_.Template}} | `
+                                    Export-Csv $($SaveAllPersoSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
 #endregion
