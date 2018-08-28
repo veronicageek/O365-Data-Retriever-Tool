@@ -6,8 +6,7 @@ O365 Data Retriever - Release 0.1.0 (Aug 22nd, 2018)
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, system.windows.forms
 
 #Refer to the XAML file
-[string]$xamlContent = Get-Content $(Join-Path -Path $PSScriptRoot -ChildPath 'MainWindow.xaml' )
-[xml]$xml = $xamlContent.Replace('{0}',$PSScriptRoot)
+[xml]$xml = Get-Content "C:\O365DataRetriever\MainWindow.xaml"
 $xamlFile = $xml
 
 #Read & Load the xaml file
@@ -586,7 +585,7 @@ $ExportSkypeUsersButton = $Window.findname('ExportSkypeUsersButton')
 
 
 #Focus on AdminTextBox when Window loads
-$AdminTextBox.Focus() | Out-Null
+$AdminTextBox.Focus()
 
 
 #Enable the "Connect" button if text is entered in the $AdminTextBox
@@ -732,18 +731,42 @@ $ConnectButton.Add_Click( {
 		Write-Host "Connecting to Exchange Online..." -ForegroundColor Cyan
 
 		#If user is MFA enabled
-		$UserAuthN = Get-MsolUser -UserPrincipalName ($creds).UserName 
-		if(($UserAuthN.StrongAuthenticationMethods) -ne $null){
-			Write-Host "You are MFA enabled..." -ForegroundColor Magenta
-			Write-Host "Unfortunately, we don't support users enabled for MFA at this point in time. Try again with a user account not MFA enabled." -ForegroundColor White -BackgroundColor DarkRed
-			$Window.Close()
-			break
+        $UserAuthN = Get-MsolUser -UserPrincipalName ($creds).UserName
+        $userIsMFA = $null -ne $UserAuthN.StrongAuthenticationMethods
+        if( $userIsMFA )
+        {
+            ## from https://docs.microsoft.com/en-us/powershell/exchange/exchange-online/connect-to-exchange-online-powershell/mfa-connect-to-exchange-online-powershell?view=exchange-ps
+            Write-Host "You are MFA enabled..." -ForegroundColor Magenta
+            Import-Module 'Microsoft.Exchange.Management.ExoPowershellModule' -ErrorAction SilentlyContinue
+            $mod = Get-Module 'Microsoft.Exchange.Management.ExoPowershellModule'
+            if( $null -eq $mod )
+            {
+                Install-Module Microsoft.Exchange.Management.ExoPowershellModule
+            }
+            ## you can't pass creds to New-ExoPSSession unless the user is
+            ## from a trusted IP. A sign-in dialog is going to pop-up regardless
+            ## of what you do from anywhere else.
+            $EXOsession = New-ExoPSSession -UserPrincipalName $creds.Username `
+                -ConnectionUri 'https://outlook.office365.com/PowerShell-LiveId' `
+                -AzureADAuthorizationEndpointUri 'https://login.windows.net/common'
+                ## -Credential $creds
 		}
-		else{
-			$EXOsession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $creds -Authentication Basic -AllowRedirection
-			Import-PSSession $EXOsession -AllowClobber | Out-Null
+        else
+        {
+            $EXOsession = New-PSSession -ConfigurationName Microsoft.Exchange `
+                -ConnectionUri https://outlook.office365.com/powershell-liveid/ `
+                -Credential $creds `
+                -Authentication Basic `
+                -AllowRedirection
 		}
-		      
+        if( $null -eq $EXOsession )
+        {
+            Write-Host "Could not create PSSession to Exchange Online. Exiting." -ForegroundColor White -BackgroundColor DarkRed
+            $Window.Close()
+            break
+        }        
+        Import-PSSession $EXOsession -AllowClobber | Out-Null
+
         #Need to run the cmdlet now (after connection to EXO) to get the $SPOTenant variable assigned to the connection to SPO
         [System.String]$Tenant = Get-OrganizationConfig | Select-Object -ExpandProperty Name
         $SPOTenant = $Tenant.Replace(".onmicrosoft.com", "")
@@ -761,21 +784,59 @@ $ConnectButton.Add_Click( {
 			Write-Host "WinRM service already started. OK." -ForegroundColor Green
 		}
 
-		#Import-Module SkypeOnlineConnector
-        $SfBOsession = New-CsOnlineSession -Credential $creds
+        #Import-Module SkypeOnlineConnector
+        if( $userIsMFA )
+        {
+            $SfBOsession = New-CsOnlineSession -UserName $creds.UserName
+        }
+        else
+        {
+            $SfBOsession = New-CsOnlineSession -Credential $creds            
+        }
         Import-PSSession $SfBOsession -AllowClobber | Out-Null
 
         #Connect to SPO
 		Write-Host "Connecting to SharePoint Online..." -ForegroundColor Cyan
-        Connect-SPOService -Url https://$SPOTenant-admin.sharepoint.com -Credential $creds
+        [bool] $gotSPO = $true
+        if( $userIsMFA )
+        {
+            Connect-SPOService -Url https://$SPOTenant-admin.sharepoint.com
+        }
+        else
+        {
+            Connect-SPOService -Url https://$SPOTenant-admin.sharepoint.com -Credential $creds
+        }
+        if( !$? )        
+        {
+            $gotSPO = $false
+        }
 
         #Connect to the Compliance Center
-		Write-Host "Connecting to the Compliance Center..." -ForegroundColor Cyan
-		$ccSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ -Credential $creds -Authentication Basic -AllowRedirection
-		Import-PSSession $ccSession -Prefix cc -AllowClobber | Out-Null
+        Write-Host "Connecting to the Compliance Center..." -ForegroundColor Cyan
+        $ConnectionUri = 'https://ps.compliance.protection.outlook.com/PowerShell-LiveId'
+        if( $userIsMFA )
+        {
+            ## you can't pass creds to New-ExoPSSession unless the user is
+            ## from a trusted IP. A sign-in dialog is going to pop-up regardless
+            ## of what you do from anywhere else.
+            $ccsession = New-ExoPSSession -UserPrincipalName $creds.Username `
+                -ConnectionUri $ConnectionUri `
+                -AzureADAuthorizationEndpointUri 'https://login.windows.net/common'
+        }
+        else
+        {
+            $ccSession = New-PSSession -ConfigurationName Microsoft.Exchange `
+                -ConnectionUri $ConnectionUri `
+                -Credential $creds `
+                -Authentication Basic `
+                -AllowRedirection
+        }
+        Import-PSSession $ccSession -Prefix cc -AllowClobber | Out-Null
 
 		#Gathering the data
 		Write-Host "Gathering the data... Be patient." -ForegroundColor White
+        $startGather = Get-Date
+        Write-Host "Gather start at $startGather"
 
         #Then the "Disconnect" button becomes enabled
         $DisconnectButton.IsEnabled = $true
@@ -1590,6 +1651,9 @@ $ConnectButton.Add_Click( {
 
 #region SPO TAB
 
+    ## fix indent at some point
+    if( $gotSPO )
+    {
 		#Site Collections tab
 		$SPOSiteCollectionsResults = @()
 		$SPOSiteCollections = Get-SPOSite -Limit All
@@ -1626,18 +1690,8 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveAllSCFileDialog.ShowDialog() -eq 'OK') {
-                    Get-SPOSite -Limit All | `
-                        Select-Object `
-                            @{N='Title';E={$_.Title}}, `
-                            @{N='Url';E={$_.Url}}, `
-                            @{N='StorageLimit';E={(($_.StorageQuota) / 1024).ToString("N")}}, `
-                            @{N='StorageUsed';E={(($_.StorageUsageCurrent) / 1024).ToString("N")}}, `
-                            @{N='Owner';E={$_.Owner}}, `
-                            @{N='SharingCapability';E={$_.SharingCapability}}, `
-                            @{N='LockState';E={$_.LockState}}, `
-                            @{N='Template';E={$_.Template}}, `
-                            @{N='ConditionalAccessPolicy';E={$_.ConditionalAccessPolicy}} | `
-                                Export-Csv $($SaveAllSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    Get-SPOSite -Limit All| Select-Object Title, url, StorageLimit, StorageUsed, Owner, LockState, Template, ConditionalAccessPolicy |
+                        Export-Csv $($SaveAllSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
 
@@ -1745,19 +1799,11 @@ $ConnectButton.Add_Click( {
 
                 # Save the file...
                 if ($SaveAllPersoSCFileDialog.ShowDialog() -eq 'OK') {
-                    Get-SPOSite -Limit All -IncludePersonalSite $true | `
-                        Where-Object {$_.Url -like "*/personal*"} | `
-                            Select-Object `
-                                @{N='Title';E={$_.Title}}, `
-                                @{N='StorageLimit';E={(($_.StorageQuota) / 1024).ToString("N")}}, `
-                                @{N='StorageUsed';E={(($_.StorageUsageCurrent) / 1024).ToString("N")}}, `
-                                @{N='Owner';E={$_.Owner}}, `
-                                @{N='SharingCapability';E={$_.SharingCapability}}, `
-                                @{N='LockState';E={$_.LockState}}, `
-                                @{N='Template';E={$_.Template}} | `
-                                    Export-Csv $($SaveAllPersoSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
+                    Get-SPOSite -Limit All -IncludePersonalSite $true | Where-Object {$_.Url -like "*/personal*"} | Select-Object Title, Url, StorageLimit, StorageUsed, Owner, SharingCapability, LockState, Template |
+                        Export-Csv $($SaveAllPersoSCFileDialog.filename) -NoTypeInformation -Encoding UTF8
                 }
             })
+    }
 #endregion
 
 #region SKYPE & TEAMS TAB
@@ -1807,6 +1853,10 @@ $ConnectButton.Add_Click( {
                 }
             })
 
+            $endGather = Get-Date
+            Write-Host "Data gathering complete $endGather"
+            $delta = $endGather - $startGather
+            Write-Host "Data gathering consumed $( $delta.Minutes ) minutes and $( $delta.Seconds ) seconds"
 #endregion
     }) #end of $ConnectButton.Add_Click
 
@@ -1955,6 +2005,6 @@ $DisconnectButton.Add_Click( {
 #endregion
 
 #Show the GUI
-$Window.ShowDialog() | Out-Null
+$Window.ShowDialog()
 
 
