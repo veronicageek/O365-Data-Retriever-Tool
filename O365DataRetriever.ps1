@@ -6,7 +6,8 @@ O365 Data Retriever - Release 0.1.0 (Aug 22nd, 2018)
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, system.windows.forms
 
 #Refer to the XAML file
-[xml]$xml = Get-Content "C:\O365DataRetriever\MainWindow.xaml"
+[string]$xamlContent = Get-Content $(Join-Path -Path $PSScriptRoot -ChildPath 'MainWindow.xaml' )
+[xml]$xml = $xamlContent.Replace('{0}',$PSScriptRoot)
 $xamlFile = $xml
 
 #Read & Load the xaml file
@@ -585,7 +586,7 @@ $ExportSkypeUsersButton = $Window.findname('ExportSkypeUsersButton')
 
 
 #Focus on AdminTextBox when Window loads
-$AdminTextBox.Focus()
+$AdminTextBox.Focus() | Out-Null
 
 
 #Enable the "Connect" button if text is entered in the $AdminTextBox
@@ -1954,6 +1955,6 @@ $DisconnectButton.Add_Click( {
 #endregion
 
 #Show the GUI
-$Window.ShowDialog()
+$Window.ShowDialog() | Out-Null
 
 
