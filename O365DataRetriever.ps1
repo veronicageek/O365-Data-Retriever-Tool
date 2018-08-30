@@ -21,7 +21,7 @@ $Window = [Windows.Markup.XamlReader]::Load( $reader )
 # START SCRIPTING
 ##################
 
-[bool]$opt = $true
+[bool]$opt = $true ## controls whether to use optimized PowerShell or original PowerShell
 function TimerStart
 {
     Param(
@@ -700,7 +700,21 @@ $ConnectButton.Add_Click( {
 			Write-Host "Microsoft Teams Module present. OK." -ForegroundColor Green
 		}
 
-        
+		#Check if Microsoft Exchange Online module present
+		if (!(Get-Module -ListAvailable -Name "Microsoft.Exchange.Management.ExoPowershellModule")){
+            $nl = [System.Environment]::NewLine
+            Write-Host ( "Microsoft Exchange Online Module not present.$nl" +
+                "Please install this module by executing the PowerShell command: $nl" +
+                "    Install-Module Microsoft.Exchange.Management.ExoPowershellModule$nl" +
+                "or in the Exchange Admin Console, hybrid -> setup -> connect." ) `
+                -ForegroundColor Red
+			$Window.Close()
+			break
+		}
+		else{
+			Write-Host "Microsoft Exchange Online Module present. OK." -ForegroundColor Green
+		}
+
         #Connect to O365
         try {
 			Write-Host "Connecting to Msol Service..." -ForegroundColor Cyan
@@ -754,17 +768,17 @@ $ConnectButton.Add_Click( {
 
 		#If user is MFA enabled
         $UserAuthN = Get-MsolUser -UserPrincipalName ($creds).UserName
-        $userIsMFA = $null -ne $UserAuthN.StrongAuthenticationMethods
+        $userIsMFA = $false
+        if( $UserAuthN.StrongAuthenticationMethods -and $UserAuthN.StrongAuthenticationMethods.Count -gt 0 )
+        {
+            $userIsMFA  = $true
+            Write-Host "You are MFA enabled..." -ForegroundColor Magenta
+        }
         if( $userIsMFA )
         {
             ## from https://docs.microsoft.com/en-us/powershell/exchange/exchange-online/connect-to-exchange-online-powershell/mfa-connect-to-exchange-online-powershell?view=exchange-ps
-            Write-Host "You are MFA enabled..." -ForegroundColor Magenta
-            Import-Module 'Microsoft.Exchange.Management.ExoPowershellModule' -ErrorAction SilentlyContinue
-            $mod = Get-Module 'Microsoft.Exchange.Management.ExoPowershellModule'
-            if( $null -eq $mod )
-            {
-                Install-Module Microsoft.Exchange.Management.ExoPowershellModule
-            }
+            
+            Import-Module 'Microsoft.Exchange.Management.ExoPowershellModule'
             ## you can't pass creds to New-ExoPSSession unless the user is
             ## from a trusted IP. A sign-in dialog is going to pop-up regardless
             ## of what you do from anywhere else.
@@ -791,7 +805,7 @@ $ConnectButton.Add_Click( {
 
         #Need to run the cmdlet now (after connection to EXO) to get the $SPOTenant variable assigned to the connection to SPO
         $msolOrgConfig = Get-OrganizationConfig
-        [System.String]$Tenant = $msolOrgConfig | Select-Object -ExpandProperty Name
+        [System.String]$Tenant = $msolOrgConfig.Name
         $SPOTenant = $Tenant.Replace(".onmicrosoft.com", "")
 
         #Connect to SfBO
@@ -832,6 +846,10 @@ $ConnectButton.Add_Click( {
         if( !$? )        
         {
             $gotSPO = $false
+            ## I regularly receive Connect-SPOService failures, even when everything else works.
+            ## I don't know why. If $gotSPO is $false, then none of the SPO cmdlets are called
+            ## and the rest of the script operates normally.
+            ## FIXME: probably should do this for all the various services.
         }
 
         #Connect to the Compliance Center
@@ -977,6 +995,10 @@ if( -not $opt )
 }
 else
 {
+        ## I have NOT optimized all the various results from the various cmdlets.
+        ## Only those cmdlets which, in my environment, consumed significant
+        ## wall-clock time.
+
         $script:DomainsResults = $TenantDomains |
             Select-Object Name,
                 IsDefault,
@@ -1141,14 +1163,14 @@ else
         TimerEnd
         TimerStart "...at a glance, mailboxes"
 
-        $AllSharedMlbx = Get-Mailbox -RecipientTypeDetails SharedMailbox -ResultSize Unlimited | Measure-Object
-        $NbrOfShdMlbxTtextBlock.Text = ($AllSharedMlbx).Count.ToString( 'n0' )
+        $AllSharedMlbx = @( Get-Mailbox -RecipientTypeDetails SharedMailbox -ResultSize Unlimited )
+        $NbrOfShdMlbxTtextBlock.Text = $AllSharedMlbx.Count.ToString( 'n0' )
 
-        $AllRooms = Get-Mailbox -RecipientTypeDetails RoomMailbox -ResultSize Unlimited | Measure-Object
-        $NbrofRoomsTextBlock.Text = ($AllRooms).Count.ToString( 'n0' )
+        $AllRooms = @( Get-Mailbox -RecipientTypeDetails RoomMailbox -ResultSize Unlimited )
+        $NbrofRoomsTextBlock.Text = $AllRooms.Count.ToString( 'n0' )
 
-        $AllEquipments = Get-Mailbox -RecipientTypeDetails EquipmentMailbox -ResultSize Unlimited | Measure-Object
-        $NbrOfEquipTextBlock.Text = ($AllEquipments).Count.ToString( 'n0' )
+        $AllEquipments = @( Get-Mailbox -RecipientTypeDetails EquipmentMailbox -ResultSize Unlimited )
+        $NbrOfEquipTextBlock.Text = $AllEquipments.Count.ToString( 'n0' )
 
         TimerEnd
 #endregion
@@ -1728,8 +1750,8 @@ else
         TimerStart "...device information"
         #Quarantined Devices
         $DevicesResults = @()
-        $QuarantinedDevices = Get-MobileDevice -ResultSize Unlimited | Where-Object {$_.DeviceAccessState -eq "Quarantined"}
-
+        #$QuarantinedDevices = Get-MobileDevice -ResultSize Unlimited | Where-Object {$_.DeviceAccessState -eq "Quarantined"}
+        $QuarantinedDevices = Get-MobileDevice -ResultSize Unlimited -Filter { DeviceAccessState -eq "Quarantined" } ## using -Filter is far faster
         if ($QuarantinedDevices) {
             foreach ($DeviceUser in $QuarantinedDevices) {
 				$SplitIdentity = ($QuarantinedDevices.Identity).IndexOf("\")
@@ -2018,7 +2040,7 @@ else
 #region ODFB TAB
 	
         #Personal Sites tab
-        TimerStart "...SPO personal sites"
+        TimerStart "...SPO personal sites (OneDrive for Business)"
 if( -not $opt )
 {        
 		$PersoSiteCollectionsResults = @()
