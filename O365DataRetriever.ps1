@@ -649,7 +649,7 @@ $ConnectButton.Add_Click( {
 			Write-Host "Microsoft Online Module present. OK." -ForegroundColor Green
         }
         
-        #Check if Azure AD Powershell module present
+<#        #Check if Azure AD Powershell module present
 		if (!(Get-Module -ListAvailable -Name "AzureAD")){
 			Write-Host "Microsoft Azure AD Graph API Powershell Module not present. Please download it via  'Install-Module AzureAD' (Powershell 5.x or visit https://www.powershellgallery.com/packages/AzureAD/2.0.1.16) " -ForegroundColor Red
 			$Window.Close()
@@ -658,7 +658,7 @@ $ConnectButton.Add_Click( {
 		else{
 			Write-Host "Microsoft Azure AD Graph API Powershell Module present. OK." -ForegroundColor Green
 		}
-
+#>
 		#Check if SharePoint Online module present
 		if (!(Get-Module -ListAvailable -Name "Microsoft.Online.SharePoint.PowerShell")){
 			Write-Host "SharePoint Online Module not present. Please download it at: https://www.microsoft.com/en-us/download/details.aspx?id=35588" -ForegroundColor Red
@@ -1150,7 +1150,7 @@ $ConnectButton.Add_Click( {
 
 
         #User Roles 
-        Write-Host "Retrieving admin role policys..." -ForegroundColor Cyan
+        Write-Host "Retrieving admin role policies..." -ForegroundColor Cyan
 		$script:ExoUserRoles = Get-RoleAssignmentPolicy
 		$script:UserRolesResults = @()
 
@@ -1187,7 +1187,7 @@ $ConnectButton.Add_Click( {
 
 
         #OWA Policies
-        Write-Host "Retrieving mailbox policys..." -ForegroundColor Cyan
+        Write-Host "Retrieving mailbox policies..." -ForegroundColor Cyan
 		$script:OWAPolicies = Get-OwaMailboxPolicy
 		$script:OWAPoliciesResults = @()
 
@@ -1225,7 +1225,7 @@ $ConnectButton.Add_Click( {
 
         #PROTECTION tab
         #Malware Filter   
-        Write-Host "Retrieving malware policys..." -ForegroundColor Cyan
+        Write-Host "Retrieving malware policies..." -ForegroundColor Cyan
 		$Script:MalwarePolicies = Get-MalwareFilterPolicy
 		$Script:MalwarePoliciesResults = @()
 		
@@ -1264,7 +1264,7 @@ $ConnectButton.Add_Click( {
 
 
         #Connection Filter 
-        Write-Host "Retrieving hosted filter policys..." -ForegroundColor Cyan
+        Write-Host "Retrieving hosted filter policies..." -ForegroundColor Cyan
         $script:ConnectionFilterResults = @()
         $script:AllConnectionFilters = Get-HostedConnectionFilterPolicy
 
@@ -1302,7 +1302,7 @@ $ConnectButton.Add_Click( {
 
 
         #Spam Filter 
-        Write-Host "Retrieving content filter policys..." -ForegroundColor Cyan
+        Write-Host "Retrieving content filter policies..." -ForegroundColor Cyan
 		$script:SpamFilters = Get-HostedContentFilterPolicy
 		$script:SpamFilterResults = @()
 	
@@ -1344,7 +1344,7 @@ $ConnectButton.Add_Click( {
 
 
         #Dkim
-        Write-Host "Retrieving dkim signing policys..." -ForegroundColor Cyan
+        Write-Host "Retrieving dkim signing policies..." -ForegroundColor Cyan
 		$script:Dkim = Get-DkimSigningConfig
 		$script:DkimResults = @()
 
@@ -1532,7 +1532,7 @@ $ConnectButton.Add_Click( {
 
 
         #Device Access Rules   
-        Write-Host "Retrieving active sync device access policys..." -ForegroundColor Cyan  
+        Write-Host "Retrieving active sync device access policies..." -ForegroundColor Cyan  
 		$script:DeviceAccessRules = Get-ActiveSyncDeviceAccessRule
 		$script:DeviceAccessRulesResults = @()
 	
