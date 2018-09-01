@@ -977,8 +977,7 @@ $ConnectButton.Add_Click( {
         }
         Write-Host "Retrieving contacts..." -ForegroundColor Cyan
         $AllContactsList = Get-MsolContact -All
-        $AllContacts = $AllContactsList.count
-        $NbrOfContactsTextBlock.Text = $AllContacts
+        $NbrOfContactsTextBlock.Text = $AllContactsList.count
 
         $AllGuests = ($AllUsersList | Where-Object {$_.UserType -eq "Guest"}).count
         $NbrOfGuestsTextBlock.Text = $AllGuests
