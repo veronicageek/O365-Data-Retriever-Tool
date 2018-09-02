@@ -1421,6 +1421,13 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
+                                         <DataGridTextColumn Width="100" Header="Conditional Access Policy" Binding="{Binding ConditionalAccessPolicy}">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style>
+                                                    <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
                                 <Button x:Name="ExportAllSCButton" Content="Export To CSV" HorizontalAlignment="Left" Margin="922,621,0,0" VerticalAlignment="Top" Width="121" Height="31" FontWeight="Normal" Background="#FFACABAB">
