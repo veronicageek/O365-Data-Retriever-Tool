@@ -22,19 +22,19 @@ _We are **not** currently using SharePoint PowerShell PnP, but that will be comi
 
 
 ### Permissions
-* The tool should be used by Office 365 _**Global Admins**_ for release 0.1.0.  
+* The tool should be used by Office 365 _**Global Admins**_.  
 _Further enhancements will surely make it available for other admins (EXO, SPO, etc...), and this will be communicated in due time._
 
-* The _Execution Policy_ must be set to **"Unrestricted"** for release 0.1.0.  
+* The _Execution Policy_ can be set to **"Unrestricted"** or **"RemoteSigned"** for release 0.1.1.  
 _This is an important subject, and if you are not able to change the policy for security reasons, we completely understand. We will work on it as soon as possible._
 
 * Skype for Business Online **will** require the _**WinRM service**_ to be started. Therefore, the tool _will attempt_ to start this service if it's not.
 
-* Multi-Factor Authentication _(MFA)_ is **not** yet supported in this first release 0.1.0, but actively working on it.
+* Multi-Factor Authentication _(MFA)_ is **not** yet supported, but actively working on it.
 
 
 ### Software
-This tool has only been tested on Windows 10 at the time of release 0.1.0.  
+This tool has only been tested on Windows 10 at this point time.  
 If you use PowerShell regularly to manage your Office 365 tenant, then you should be good to go. If not, have a look at the [common issues](https://docs.microsoft.com/en-us/office365/enterprise/powershell/connect-to-office-365-powershell#how-do-you-know-this-worked).
 
 
@@ -56,16 +56,11 @@ _This file contains the PowerShell script with bindings to the xaml file_
 
 
 ## How do I launch the tool?
-Please note that for simplicity, the tool should be installed on the C:\ drive.  
-However, if you wish to change the location, the XAML & PS1 files should be updated to reference your own location.
 
-1. Create a folder named "O365DataRetriever" at the root of your C:\ drive, and add the 2 folders + 2 files _(see above)_  
-_The **MainWindow.xaml** file and the **O365DataRetriever.ps1** file are both referencing this location. If you don't want the tool to be on your C: drive, change the path to your new one in both files._
-
-![Folder_C_drive](screenshots/C_drive_folder.png)
+1. Download the necessary files and folders _(see above)_ to a location of your choice.
 
 
-2. Open a PowerShell window _(console or ISE)_ with admin rights, and navigate to the location of the main folder containing all the files/folders.
+2. Open a PowerShell window _(console or ISE)_ with admin rights, and navigate to this location.
 
 3. Launch the tool by running ```.\O365DataRetriever.ps1```
 
@@ -75,7 +70,7 @@ _The **MainWindow.xaml** file and the **O365DataRetriever.ps1** file are both re
 
 ![creds_section](screenshots/creds_panel.png)
 
-5. Wait for a few seconds to _retrieve_ and _display_ the data.
+5. Wait for a few seconds for the data to be _retrieved_ and _displayed_.
 
 
 ## Having issues with the instructions?
