@@ -1,5 +1,5 @@
 ﻿<#
-O365 Data Retriever - Release 0.1.0 (Aug 22nd, 2018)
+O365 Data Retriever - Release 0.1.1 (Sept 20th, 2018)
 #>
 
 #Load the Assemblies
@@ -630,13 +630,13 @@ $ConnectButton.Add_Click( {
 
 		#Check ExecutionPolicy is set to "Unrestricted" on computer running the tool (for version 0.1.0)
 		$ExecutionPolicy = Get-ExecutionPolicy
-		if($ExecutionPolicy -ne "Unrestricted"){
-			Write-Host "For this release 0.1.0, the execution policy must be set to Unrestricted. Please change it and try again." -ForegroundColor White -BackgroundColor DarkRed
+		if($ExecutionPolicy -ne "Unrestricted" -or "RemoteSigned"){
+			Write-Host "For this release 0.1.1, the execution policy must be set to Unrestricted or RemoteSigned. Please change it and try again." -ForegroundColor White -BackgroundColor DarkRed
 			$Window.Close()
 			break
 		}
 		else{
-			Write-Host "Execution policy set to Unrestricted. OK." -ForegroundColor Green
+			Write-Host "Execution policy set correctly. OK." -ForegroundColor Green
 		}
 
 		#Check if MSOnline module present
@@ -695,7 +695,7 @@ $ConnectButton.Add_Click( {
 				Write-Host "You are a Global Admin. OK." -ForegroundColor White
 			}
 			else{
-				Write-Host "You are not a Global Admin! Release 0.1.0 is only available for Global Admins. Please try again with the correct account." -ForegroundColor White -BackgroundColor DarkRed
+				Write-Host "You are not a Global Admin! Release 0.1.1 is only available for Global Admins. Please try again with the correct account." -ForegroundColor White -BackgroundColor DarkRed
 				$Window.Close()
 				break
 			}
@@ -927,7 +927,7 @@ $ConnectButton.Add_Click( {
             })
 
         #Global Admins 
-        Write-Host "Retrieving admin roles..." -ForegroundColor Cyan
+        Write-Host "Retrieving Global Admin Roles..." -ForegroundColor Cyan
         $GArole = Get-MsolRole -RoleName "Company Administrator"
         $GARoleObjectId = ($GArole).ObjectId
         $script:GlobalAdmins = Get-MsolRoleMember -RoleObjectId $GARoleObjectId | Select-Object DisplayName, EmailAddress, IsLicensed
@@ -953,7 +953,7 @@ $ConnectButton.Add_Click( {
             })
 
         #At a Glance section (right side)
-        Write-Host "Retrieving users..." -ForegroundColor Cyan
+        Write-Host "Retrieving Users..." -ForegroundColor Cyan
         $AllUsersList = Get-MsolUser -All
         $AllUsers = $AllUsersList.count
         $NbrOfUsersTextBlock.Text = $AllUsers
@@ -975,18 +975,18 @@ $ConnectButton.Add_Click( {
         else {
             $NbrOfBlockedAndLicensedUsersTextBlock.Foreground = "Black"
         }
-        Write-Host "Retrieving contacts..." -ForegroundColor Cyan
+        Write-Host "Retrieving Contacts..." -ForegroundColor Cyan
         $AllContactsList = Get-MsolContact -All
         $NbrOfContactsTextBlock.Text = $AllContactsList.count
 
         $AllGuests = ($AllUsersList | Where-Object {$_.UserType -eq "Guest"}).count
         $NbrOfGuestsTextBlock.Text = $AllGuests
         
-        Write-Host "Retrieving groups..." -ForegroundColor Cyan
+        Write-Host "Retrieving Groups..." -ForegroundColor Cyan
         $Script:AllGroups = Get-MsolGroup -All
         $NbrOfGroupsTextBlock.Text = $AllGroups.count
 
-        Write-Host "Retrieving mailboxes..." -ForegroundColor Cyan
+        Write-Host "Retrieving Mailboxes..." -ForegroundColor Cyan
         $script:AllMailboxesList = Get-Mailbox -ResultSize Unlimited
 
         $AllSharedMlbx = $AllMailboxesList | where-Object { $_.RecipientTypeDetails -eq 'SharedMailbox' } | Measure-Object
@@ -1062,7 +1062,7 @@ $ConnectButton.Add_Click( {
 
 
         #Contacts
-        Write-Host "Retrieving exchange contacts..." -ForegroundColor Cyan
+        Write-Host "Retrieving Exchange Contacts..." -ForegroundColor Cyan
         $script:ContactsResults = @()
         $script:AllContacts = Get-Contact -ResultSize Unlimited
 
@@ -1102,7 +1102,7 @@ $ConnectButton.Add_Click( {
 
         #PERMISSIONS tab
         #Admin Roles
-        Write-Host "Retrieving admin roles..." -ForegroundColor Cyan
+        Write-Host "Retrieving Admin Roles..." -ForegroundColor Cyan
         $script:AdminRolesPerm = Get-RoleGroup -ResultSize Unlimited 
         $script:AdminRolesResults = @()
 		
@@ -1139,7 +1139,7 @@ $ConnectButton.Add_Click( {
 
 
         #User Roles 
-        Write-Host "Retrieving admin role policies..." -ForegroundColor Cyan
+        Write-Host "Retrieving Admin Role Policies..." -ForegroundColor Cyan
 		$script:ExoUserRoles = Get-RoleAssignmentPolicy
 		$script:UserRolesResults = @()
 
@@ -1176,7 +1176,7 @@ $ConnectButton.Add_Click( {
 
 
         #OWA Policies
-        Write-Host "Retrieving mailbox policies..." -ForegroundColor Cyan
+        Write-Host "Retrieving Mailbox Policies..." -ForegroundColor Cyan
 		$script:OWAPolicies = Get-OwaMailboxPolicy
 		$script:OWAPoliciesResults = @()
 
@@ -1214,7 +1214,7 @@ $ConnectButton.Add_Click( {
 
         #PROTECTION tab
         #Malware Filter   
-        Write-Host "Retrieving malware policies..." -ForegroundColor Cyan
+        Write-Host "Retrieving Malware Policies..." -ForegroundColor Cyan
 		$Script:MalwarePolicies = Get-MalwareFilterPolicy
 		$Script:MalwarePoliciesResults = @()
 		
@@ -1253,7 +1253,7 @@ $ConnectButton.Add_Click( {
 
 
         #Connection Filter 
-        Write-Host "Retrieving hosted filter policies..." -ForegroundColor Cyan
+        Write-Host "Retrieving Connection Filter Policies..." -ForegroundColor Cyan
         $script:ConnectionFilterResults = @()
         $script:AllConnectionFilters = Get-HostedConnectionFilterPolicy
 
@@ -1291,7 +1291,7 @@ $ConnectButton.Add_Click( {
 
 
         #Spam Filter 
-        Write-Host "Retrieving content filter policies..." -ForegroundColor Cyan
+        Write-Host "Retrieving Spam Filter Policies..." -ForegroundColor Cyan
 		$script:SpamFilters = Get-HostedContentFilterPolicy
 		$script:SpamFilterResults = @()
 	
@@ -1333,7 +1333,7 @@ $ConnectButton.Add_Click( {
 
 
         #Dkim
-        Write-Host "Retrieving dkim signing policies..." -ForegroundColor Cyan
+        Write-Host "Retrieving DKIM Policies..." -ForegroundColor Cyan
 		$script:Dkim = Get-DkimSigningConfig
 		$script:DkimResults = @()
 
@@ -1371,7 +1371,7 @@ $ConnectButton.Add_Click( {
 
         #MAIL FLOW tab
         #Rules
-        Write-Host "Retrieving transport rules..." -ForegroundColor Cyan
+        Write-Host "Retrieving Transport Rules..." -ForegroundColor Cyan
         $script:TransportRules = Get-TransportRule | Select-Object Name, State, Mode, Priority, Comments, ActivationDate, ExpiryDate
         $NbrOfRulesTextBlock.Text = ($TransportRules).Count
         $NbrOfRulesTextBlock.Foreground = "Red"
@@ -1395,7 +1395,7 @@ $ConnectButton.Add_Click( {
 
 
         #Accepted Domains
-        Write-Host "Retrieving accepted domains..." -ForegroundColor Cyan
+        Write-Host "Retrieving Accepted Domains..." -ForegroundColor Cyan
 		$script:AcceptedDomains = Get-AcceptedDomain
 		$script:AcceptedDomainsResults = @()
 		
@@ -1433,7 +1433,7 @@ $ConnectButton.Add_Click( {
 
 
         #Remote Domains
-        Write-Host "Retrieving remote domains..." -ForegroundColor Cyan
+        Write-Host "Retrieving Remote Domains..." -ForegroundColor Cyan
         $script:RemoteDomainsResults = @()
         $script:RemoteDomains = Get-RemoteDomain
 
@@ -1475,7 +1475,7 @@ $ConnectButton.Add_Click( {
 	
         #MOBILE DEVICES tab
         #Quarantined Devices
-        Write-Host "Retrieving mobile devices..." -ForegroundColor Cyan
+        Write-Host "Retrieving Quarantined Mobile Devices..." -ForegroundColor Cyan
         $script:DevicesResults = @()
         $script:QuarantinedDevices =  Get-MobileDevice -ResultSize Unlimited | Where-Object {$_.DeviceAccessState -eq "Quarantined"}
 
@@ -1521,7 +1521,7 @@ $ConnectButton.Add_Click( {
 
 
         #Device Access Rules   
-        Write-Host "Retrieving active sync device access policies..." -ForegroundColor Cyan  
+        Write-Host "Retrieving ActiveSync Device Access Policies..." -ForegroundColor Cyan  
 		$script:DeviceAccessRules = Get-ActiveSyncDeviceAccessRule
 		$script:DeviceAccessRulesResults = @()
 	
@@ -1558,7 +1558,7 @@ $ConnectButton.Add_Click( {
 
 
         #Device Mailbox Policies
-        Write-Host "Retrieving mobile devices mailbox policy..." -ForegroundColor Cyan
+        Write-Host "Retrieving Mobile Devices Mailbox Policies..." -ForegroundColor Cyan
         $script:DeviceMlbxPolicies = Get-MobileDeviceMailboxPolicy
 		$script:DeviceMlbxPoliciesResults = @()
 	
@@ -1606,7 +1606,7 @@ $ConnectButton.Add_Click( {
 #region SPO TAB
 
         #Site Collections tab
-        Write-Host "Retrieving SPO sites..." -ForegroundColor Cyan
+        Write-Host "Retrieving SPO Sites..." -ForegroundColor Cyan
         $script:SPOSiteCollectionsResults = @()
         $script:SPOSiteCollectionsAll = Get-SPOSite -Limit All -IncludePersonalSite $true 
 		$script:SPOSiteCollections = $SPOSiteCollectionsAll | Where-Object {$_.Url -notlike "*/personal*"}
@@ -1691,7 +1691,7 @@ $ConnectButton.Add_Click( {
 
 
         #Hub Sites tab
-        Write-Host "Retrieving SPO Hub sites..." -ForegroundColor Cyan
+        Write-Host "Retrieving SPO Hub-Sites..." -ForegroundColor Cyan
 		$script:HubSitesResults = @()
 		$script:SPOHubsites = Get-SPOHubSite
 
