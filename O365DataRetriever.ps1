@@ -630,7 +630,7 @@ $ConnectButton.Add_Click( {
 
 		#Check ExecutionPolicy is set to "Unrestricted" on computer running the tool (for version 0.1.0)
 		$ExecutionPolicy = Get-ExecutionPolicy
-		if($ExecutionPolicy -ne "Unrestricted" -or "RemoteSigned"){
+		if($ExecutionPolicy -ne "Unrestricted" -or $ExecutionPolicy -ne "RemoteSigned"){
 			Write-Host "For this release 0.1.1, the execution policy must be set to Unrestricted or RemoteSigned. Please change it and try again." -ForegroundColor White -BackgroundColor DarkRed
 			$Window.Close()
 			break
