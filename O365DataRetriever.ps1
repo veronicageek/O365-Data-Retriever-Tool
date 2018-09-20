@@ -630,13 +630,13 @@ $ConnectButton.Add_Click( {
 
 		#Check ExecutionPolicy is set to "Unrestricted" on computer running the tool (for version 0.1.0)
 		$ExecutionPolicy = Get-ExecutionPolicy
-		if($ExecutionPolicy -ne "Unrestricted" -or $ExecutionPolicy -ne "RemoteSigned"){
+		if(($ExecutionPolicy -eq "Unrestricted") -or ($ExecutionPolicy -eq "RemoteSigned")){
+			Write-Host "Execution policy set correctly. OK." -ForegroundColor Green
+		}
+		else{
 			Write-Host "For this release 0.1.1, the execution policy must be set to Unrestricted or RemoteSigned. Please change it and try again." -ForegroundColor White -BackgroundColor DarkRed
 			$Window.Close()
 			break
-		}
-		else{
-			Write-Host "Execution policy set correctly. OK." -ForegroundColor Green
 		}
 
 		#Check if MSOnline module present
@@ -692,7 +692,7 @@ $ConnectButton.Add_Click( {
 			$GARoleMember = Get-MsolRoleMember -RoleObjectId $GlobalAdminRoleObjectId
 
 			if ($userLogged -in ($GARoleMember.EmailAddress)){
-				Write-Host "You are a Global Admin. OK." -ForegroundColor White
+				Write-Host "You are a Global Admin. OK." -ForegroundColor Green
 			}
 			else{
 				Write-Host "You are not a Global Admin! Release 0.1.1 is only available for Global Admins. Please try again with the correct account." -ForegroundColor White -BackgroundColor DarkRed
@@ -856,7 +856,7 @@ $ConnectButton.Add_Click( {
 
 #region TENANT TAB
         #Domains
-        Write-Host "Retrieving MSOL domains..." -ForegroundColor Cyan
+        Write-Host "Retrieving MSOL Domains..." -ForegroundColor Cyan
 		$script:TenantDomains = Get-MsolDomain
         $script:DomainsResults = @()
         foreach ($Domain in $TenantDomains) {
@@ -892,7 +892,7 @@ $ConnectButton.Add_Click( {
             })
 
         #Plans
-        Write-Host "Retrieving Subscription data..." -ForegroundColor Cyan
+        Write-Host "Retrieving Subscription(s)..." -ForegroundColor Cyan
 		$script:Plans = Get-MsolSubscription
 		$PlansResults = @()
 		foreach($plan in $Plans){
@@ -1558,7 +1558,7 @@ $ConnectButton.Add_Click( {
 
 
         #Device Mailbox Policies
-        Write-Host "Retrieving Mobile Devices Mailbox Policies..." -ForegroundColor Cyan
+        Write-Host "Retrieving Mobile Device Mailbox Policies..." -ForegroundColor Cyan
         $script:DeviceMlbxPolicies = Get-MobileDeviceMailboxPolicy
 		$script:DeviceMlbxPoliciesResults = @()
 	
