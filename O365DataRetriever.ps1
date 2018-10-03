@@ -1614,22 +1614,19 @@ $ConnectButton.Add_Click( {
 #region ODFB TAB
 
 		#Personal Sites tab
-		$script:PersoSiteCollectionsResults = @()
 		$script:PersoSiteCollections = $SPOSiteCollectionsAll | Where-Object {$_.Url -like "*/personal*"}
 
-		foreach($PersoSite in $PersoSiteCollections){
-			$PersoSCProps = @{
-				Title = $PersoSite.Title
-				StorageLimit = (($PersoSite.StorageQuota) / 1024).ToString("N")
-				StorageUsed = (($PersoSite.StorageUsageCurrent) / 1024).ToString("N")
-				Owner = $PersoSite.Owner
+		$script:PersoSiteCollectionsResults = foreach($PersoSite in $PersoSiteCollections){
+			[PSCustomObject]@{
+				Title             = $PersoSite.Title
+				StorageLimit      = (($PersoSite.StorageQuota) / 1024).ToString("N")
+				StorageUsed       = (($PersoSite.StorageUsageCurrent) / 1024).ToString("N")
+				Owner             = $PersoSite.Owner
 				SharingCapability = $PersoSite.SharingCapability
-				LockState = $PersoSite.LockState
-				Template = $PersoSite.Template
+				LockState         = $PersoSite.LockState
+				Template          = $PersoSite.Template
 			}
-			$script:PersoSiteCollectionsResults += New-Object PSObject -Property $PersoSCProps
 		}
-		$PersoSiteCollectionsResults | Select-Object Title, StorageLimit, StorageUsed, Owner, SharingCapability, LockState, Template
 
 		$NbrOfPersoSiteColTextBlock.Text = ($PersoSiteCollectionsResults).Count
         $NbrOfPersoSiteColTextBlock.Foreground = "Red"
@@ -1684,7 +1681,6 @@ $ConnectButton.Add_Click( {
                 TeamsMessagingPolicy   = $SfboUser.TeamsMessagingPolicy
             }
 		}
-		#$SkypeUsersResults | Select-Object DisplayName, UserPrincipalName, Enabled, UsageLocation, SipProxyAddress, ProxyAddresses, InterpretedUserType, HideFromAddressLists, EnterpriseVoiceEnabled, EnabledForRichPresence, ArchivingPolicy, TeamsMeetingPolicy, TeamsCallingPolicy, TeamsMessagingPolicy
 
 		$NbrOfSkypeUsersTextBlock.Text = ($SkypeUsersResults).Count
         $NbrOfSkypeUsersTextBlock.Foreground = "Red"
