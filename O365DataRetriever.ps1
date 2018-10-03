@@ -1490,25 +1490,22 @@ $ConnectButton.Add_Click( {
 
         #Site Collections tab
         Write-Host "Retrieving SPO Sites..." -ForegroundColor Cyan
-        $script:SPOSiteCollectionsResults = @()
         $script:SPOSiteCollectionsAll = Get-SPOSite -Limit All -IncludePersonalSite $true
 		$script:SPOSiteCollections = $SPOSiteCollectionsAll | Where-Object {$_.Url -notlike "*/personal*"}
 
-		foreach($site in $SPOSiteCollections){
-			$SCProps = @{
-				Title = $site.Title
-				Url = $site.Url
-				StorageLimit = (($site.StorageQuota) / 1024).ToString("N")
-				StorageUsed = (($site.StorageUsageCurrent) / 1024).ToString("N")
-				Owner = $site.Owner
-				SharingCapability = $site.SharingCapability
-				LockState = $site.LockState
-				Template = $site.Template
+		$script:SPOSiteCollectionsResults = foreach($site in $SPOSiteCollections){
+			[PSCustomObject]@{
+				Title                   = $site.Title
+				Url                     = $site.Url
+				StorageLimit            = (($site.StorageQuota) / 1024).ToString("N")
+				StorageUsed             = (($site.StorageUsageCurrent) / 1024).ToString("N")
+				Owner                   = $site.Owner
+				SharingCapability       = $site.SharingCapability
+				LockState               = $site.LockState
+				Template                = $site.Template
 				ConditionalAccessPolicy = $site.ConditionalAccessPolicy
 			}
-			$script:SPOSiteCollectionsResults += New-Object PSObject -Property $SCProps
 		}
-		$SPOSiteCollectionsResults | Select-Object Title, Url, StorageLimit, StorageUsed, Owner, SharingCapability, LockState, Template, ConditionalAccessPolicy
 
 		$NbrOfSiteColTextBlock.Text = ($SPOSiteCollectionsResults).Count
         $NbrOfSiteColTextBlock.Foreground = "Red"
