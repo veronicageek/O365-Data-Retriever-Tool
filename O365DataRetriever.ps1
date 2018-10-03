@@ -911,7 +911,7 @@ $ConnectButton.Add_Click( {
 
 
         #Groups
-        $AllGroupsResults = foreach ($Group in $script:AllGroups) {
+        [array]$AllGroupsResults = foreach ($Group in $script:AllGroups) {
             [PSCustomObject]@{
                 DisplayName  = $Group.DisplayName
                 EmailAddress = $Group.EmailAddress
@@ -945,7 +945,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving Exchange Contacts..." -ForegroundColor Cyan
         $script:AllContacts = Get-Contact -ResultSize Unlimited
 
-        $script:ContactsResults = foreach ($Contact in $AllContacts) {
+        [array]$script:ContactsResults = foreach ($Contact in $AllContacts) {
             [PSCustomObject]@{
                 DisplayName          = $Contact.DisplayName
                 Company              = $Contact.Company
@@ -982,7 +982,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving Admin Roles..." -ForegroundColor Cyan
         $script:AdminRolesPerm = Get-RoleGroup -ResultSize Unlimited
 
-		$script:AdminRolesResults = foreach($AdminRole in $AdminRolesPerm){
+		[array]$script:AdminRolesResults = foreach($AdminRole in $AdminRolesPerm){
 			[PSCustomObject]@{
 				Name        = $AdminRole.Name
 				Description = $AdminRole.Description
@@ -1016,7 +1016,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving Admin Role Policies..." -ForegroundColor Cyan
 		$script:ExoUserRoles = Get-RoleAssignmentPolicy
 
-		$script:UserRolesResults = foreach($UserRole in $ExoUserRoles){
+		[array]$script:UserRolesResults = foreach($UserRole in $ExoUserRoles){
 			[PSCustomObject]@{
 				Name          = $UserRole.Name
 				IsDefault     = $UserRole.IsDefault
@@ -1050,7 +1050,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving Mailbox Policies..." -ForegroundColor Cyan
 		$script:OWAPolicies = Get-OwaMailboxPolicy
 
-		$script:OWAPoliciesResults = foreach($OWAPolicy in $OWAPolicies){
+		[array]$script:OWAPoliciesResults = foreach($OWAPolicy in $OWAPolicies){
 			[PSCustomObject]@{
 				Name        = $OWAPolicy.Name
 				IsDefault   = $OWAPolicy.IsDefault
@@ -1085,7 +1085,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving Malware Policies..." -ForegroundColor Cyan
 		$Script:MalwarePolicies = Get-MalwareFilterPolicy
 
-		$Script:MalwarePoliciesResults = foreach($MalwarePolicy in $MalwarePolicies){
+		[array]$Script:MalwarePoliciesResults = foreach($MalwarePolicy in $MalwarePolicies){
 			[PSCustomObject]@{
 				Name                = $MalwarePolicy.Name
 				IsDefault           = $MalwarePolicy.IsDefault
@@ -1121,7 +1121,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving Connection Filter Policies..." -ForegroundColor Cyan
         $script:AllConnectionFilters = Get-HostedConnectionFilterPolicy
 
-        $script:ConnectionFilterResults = foreach ($Connection in $AllConnectionFilters){
+        [array]$script:ConnectionFilterResults = foreach ($Connection in $AllConnectionFilters){
             [PSCustomObject]@{
                 Name        = $Connection.Name
                 Default     = $Connection.IsDefault
@@ -1156,7 +1156,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving Spam Filter Policies..." -ForegroundColor Cyan
 		$script:SpamFilters = Get-HostedContentFilterPolicy
 
-		$script:SpamFilterResults = foreach ($SpamFilter in $SpamFilters){
+		[array]$script:SpamFilterResults = foreach ($SpamFilter in $SpamFilters){
             [PSCustomObject]@{
                 Name                             = $SpamFilter.Name
                 Default                          = $SpamFilter.IsDefault
@@ -1195,7 +1195,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving DKIM Policies..." -ForegroundColor Cyan
 		$script:Dkim = Get-DkimSigningConfig
 
-		$script:DkimResults = foreach ($DkimSigning in $Dkim){
+		[array]$script:DkimResults = foreach ($DkimSigning in $Dkim){
             [PSCustomObject]@{
                 Domain      = $DkimSigning.Domain
                 Enabled     = $DkimSigning.Enabled
@@ -1254,7 +1254,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving Accepted Domains..." -ForegroundColor Cyan
 		$script:AcceptedDomains = Get-AcceptedDomain
 
-		$script:AcceptedDomainsResults = foreach ($AcceptedDomain in $AcceptedDomains) {
+		[array]$script:AcceptedDomainsResults = foreach ($AcceptedDomain in $AcceptedDomains) {
             [PSCustomObject]@{
                 DomainName         = $AcceptedDomain.DomainName
                 Default            = $AcceptedDomain.Default
@@ -1289,7 +1289,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving Remote Domains..." -ForegroundColor Cyan
         $script:RemoteDomains = Get-RemoteDomain
 
-        $script:RemoteDomainsResults = foreach ($RemoteDomain in $RemoteDomains) {
+        [array]$script:RemoteDomainsResults = foreach ($RemoteDomain in $RemoteDomains) {
             [PSCustomObject]@{
                 Name                              = $RemoteDomain.Name
                 DomainName                        = $RemoteDomain.DomainName
@@ -1329,7 +1329,7 @@ $ConnectButton.Add_Click( {
         $script:QuarantinedDevices =  Get-MobileDevice -ResultSize Unlimited | Where-Object {$_.DeviceAccessState -eq "Quarantined"}
 
         if ($QuarantinedDevices) {
-            $script:DevicesResults = foreach ($DeviceUser in $QuarantinedDevices) {
+            [array]$script:DevicesResults = foreach ($DeviceUser in $QuarantinedDevices) {
 				$SplitIdentity = ($QuarantinedDevices.Identity).IndexOf("\")
 				$DeviceUserName = ($QuarantinedDevices.Identity).Substring(0, $SplitIdentity)
 
@@ -1370,7 +1370,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving ActiveSync Device Access Policies..." -ForegroundColor Cyan
 		$script:DeviceAccessRules = Get-ActiveSyncDeviceAccessRule
 
-		$script:DeviceAccessRulesResults = foreach ($DeviceAccessRule in $DeviceAccessRules) {
+		[array]$script:DeviceAccessRulesResults = foreach ($DeviceAccessRule in $DeviceAccessRules) {
                 [PSCustomObject]@{
                     Name           = $DeviceAccessRule.Name
                     QueryString    = $DeviceAccessRule.QueryString
@@ -1404,7 +1404,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving Mobile Device Mailbox Policies..." -ForegroundColor Cyan
         $script:DeviceMlbxPolicies = Get-MobileDeviceMailboxPolicy
 
-		$script:DeviceMlbxPoliciesResults = foreach ($DeviceMlbxPolicy in $DeviceMlbxPolicies) {
+		[array]$script:DeviceMlbxPoliciesResults = foreach ($DeviceMlbxPolicy in $DeviceMlbxPolicies) {
                 [PSCustomObject]@{
                     Name                         = $DeviceMlbxPolicy.Name
                     IsDefault                    = $DeviceMlbxPolicy.IsDefault
@@ -1448,7 +1448,7 @@ $ConnectButton.Add_Click( {
         $script:SPOSiteCollectionsAll = Get-SPOSite -Limit All -IncludePersonalSite $true
 		$script:SPOSiteCollections = $SPOSiteCollectionsAll | Where-Object {$_.Url -notlike "*/personal*"}
 
-		$script:SPOSiteCollectionsResults = foreach($site in $SPOSiteCollections){
+		[array]$script:SPOSiteCollectionsResults = foreach($site in $SPOSiteCollections){
 			[PSCustomObject]@{
 				Title                   = $site.Title
 				Url                     = $site.Url
@@ -1527,19 +1527,15 @@ $ConnectButton.Add_Click( {
 
         #Hub Sites tab
         Write-Host "Retrieving SPO Hub-Sites..." -ForegroundColor Cyan
-		$script:HubSitesResults = @()
 		$script:SPOHubsites = Get-SPOHubSite
 
-		foreach($Hubsite in $SPOHubsites){
-			$HubsitesProps = @{
-				Title = $Hubsite.Title
+		[array]$script:HubSitesResults = foreach($Hubsite in $SPOHubsites){
+			[PSCustomObject]@{
+				Title       = $Hubsite.Title
 				Description = $Hubsite.Description
-				SiteUrl = $Hubsite.SiteUrl
-
+				SiteUrl     = $Hubsite.SiteUrl
 			}
-			$script:HubSitesResults += New-Object PSObject -Property $HubsitesProps
 		}
-		$HubSitesResults | Select-Object Title, Description, SiteUrl
 
 		$NbrOfHubSitesTextBlock.Text = ($HubSitesResults).Count
         $NbrOfHubSitesTextBlock.Foreground = "Red"
@@ -1568,7 +1564,7 @@ $ConnectButton.Add_Click( {
 		#Personal Sites tab
 		$script:PersoSiteCollections = $SPOSiteCollectionsAll | Where-Object {$_.Url -like "*/personal*"}
 
-		$script:PersoSiteCollectionsResults = foreach($PersoSite in $PersoSiteCollections){
+		[array]$script:PersoSiteCollectionsResults = foreach($PersoSite in $PersoSiteCollections){
 			[PSCustomObject]@{
 				Title             = $PersoSite.Title
 				StorageLimit      = (($PersoSite.StorageQuota) / 1024).ToString("N")
@@ -1615,7 +1611,7 @@ $ConnectButton.Add_Click( {
         Write-Host "Retrieving Skype Users..." -ForegroundColor Cyan
 		$script:SkypeUsers = Get-CsOnlineUser
 
-		$script:SkypeUsersResults = foreach($SfboUser in $SkypeUsers){
+		[array]$script:SkypeUsersResults = foreach($SfboUser in $SkypeUsers){
 			[PSCustomObject]@{
                 DisplayName            = $SfboUser.DisplayName
                 UserPrincipalName      = $SfboUser.UserPrincipalName
