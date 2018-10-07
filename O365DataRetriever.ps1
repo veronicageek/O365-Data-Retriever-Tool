@@ -531,7 +531,7 @@ $ConnectButton.Add_Click( {
 		else{
 			Write-Host "Microsoft Online Module present. OK." -ForegroundColor Green
         }
-        
+
 		#Check if SharePoint Online module present
 		if (!(Get-Module -ListAvailable -Name "Microsoft.Online.SharePoint.PowerShell")){
 			Write-Host "SharePoint Online Module not present. Please download it at: https://www.microsoft.com/en-us/download/details.aspx?id=35588" -ForegroundColor Red
@@ -541,7 +541,7 @@ $ConnectButton.Add_Click( {
 		else{
 			Write-Host "SharePoint Online Module present. OK." -ForegroundColor Green
 		}
-		
+
 		#Check if Skype For Business Online module present
 		if (!(Get-Module -ListAvailable -Name "SkypeOnlineConnector")){
 			Write-Host "Skype For Business Online Module not present. Please download it at: https://www.microsoft.com/en-us/download/details.aspx?id=39366" -ForegroundColor Red
@@ -562,7 +562,7 @@ $ConnectButton.Add_Click( {
 			Write-Host "Microsoft Teams Module present. OK." -ForegroundColor Green
 		}
 
-        
+
         #Connect to O365
         try {
 			Write-Host "Connecting to Msol Service..." -ForegroundColor Cyan
@@ -615,7 +615,7 @@ $ConnectButton.Add_Click( {
 		Write-Host "Connecting to Exchange Online..." -ForegroundColor Cyan
 
 		#If user is MFA enabled
-		$UserAuthN = Get-MsolUser -UserPrincipalName ($creds).UserName 
+		$UserAuthN = Get-MsolUser -UserPrincipalName ($creds).UserName
 		if(($UserAuthN.StrongAuthenticationMethods) -ne $null){
 			Write-Host "You are MFA enabled..." -ForegroundColor Magenta
 			Write-Host "Unfortunately, we don't support users enabled for MFA at this point in time. Try again with a user account not MFA enabled." -ForegroundColor White -BackgroundColor DarkRed
@@ -626,7 +626,7 @@ $ConnectButton.Add_Click( {
 			$EXOsession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $creds -Authentication Basic -AllowRedirection
 			Import-PSSession $EXOsession -AllowClobber | Out-Null
 		}
-		      
+
         #Need to run the cmdlet now (after connection to EXO) to get the $SPOTenant variable assigned to the connection to SPO
         [System.String]$Tenant = Get-OrganizationConfig | Select-Object -ExpandProperty Name
         $SPOTenant = $Tenant.Replace(".onmicrosoft.com", "")
@@ -642,7 +642,7 @@ $ConnectButton.Add_Click( {
 
         #Connect to SfBO
 		Write-Host "Connecting to Skype for Business Online..." -ForegroundColor Cyan
-		
+
 		## SfBO needs WinRM to be started  ### A warning about increasing the WSMan NetworkDelayms value is expected the first time you connect and should be ignored.
 		if ((Get-Service -Name WinRM).Status -eq "Stopped"){
 			Write-Warning "WinRM is required for SfBO PowerShell Module. Starting the WinRM service..."
@@ -780,7 +780,7 @@ $ConnectButton.Add_Click( {
 		$PlansResults = @()
 		foreach($plan in $Plans){
 			$PlanProps = @{
-				SkuPartNumber = $plan.SkuPartNumber 
+				SkuPartNumber = $plan.SkuPartNumber
 				TotalLicenses = $plan.TotalLicenses
 				IsTrial = $plan.IsTrial
 				Status = $plan.Status
@@ -809,7 +809,7 @@ $ConnectButton.Add_Click( {
                 }
             })
 
-        #Global Admins 
+        #Global Admins
         Write-Host "Retrieving Global Admin Roles..." -ForegroundColor Cyan
         $GArole = Get-MsolRole -RoleName "Company Administrator"
         $GARoleObjectId = ($GArole).ObjectId
@@ -864,7 +864,7 @@ $ConnectButton.Add_Click( {
 
         $AllGuests = ($AllUsersList | Where-Object {$_.UserType -eq "Guest"}).count
         $NbrOfGuestsTextBlock.Text = $AllGuests
-        
+
         Write-Host "Retrieving Groups..." -ForegroundColor Cyan
         $Script:AllGroups = Get-MsolGroup -All
         $NbrOfGroupsTextBlock.Text = $AllGroups.count
@@ -910,17 +910,14 @@ $ConnectButton.Add_Click( {
             })
 
 
-        #Groups 
-        $AllGroupsResults = @()
-        foreach ($Group in $script:AllGroups) {
-            $GroupsProps = @{
+        #Groups
+        [array]$AllGroupsResults = foreach ($Group in $script:AllGroups) {
+            [PSCustomObject]@{
                 DisplayName  = $Group.DisplayName
                 EmailAddress = $Group.EmailAddress
                 GroupType    = $Group.GroupType
             }
-            $AllGroupsResults += New-Object PSObject -Property $GroupsProps
         }
-        $AllGroupsResults | Select-Object DisplayName, EmailAddress, GroupType
 
         $GroupsTextBlock.Text = ($AllGroupsResults).Count
         $GroupsTextBlock.Foreground = "Red"
@@ -946,22 +943,19 @@ $ConnectButton.Add_Click( {
 
         #Contacts
         Write-Host "Retrieving Exchange Contacts..." -ForegroundColor Cyan
-        $script:ContactsResults = @()
         $script:AllContacts = Get-Contact -ResultSize Unlimited
 
-        foreach ($Contact in $AllContacts) {
-            $ContactsProps = @{
-                DisplayName        = $Contact.DisplayName
-                Company         = $Contact.Company
-                Title            = $Contact.Title
-                CountryorRegion  = $Contact.CountryOrRegion
-                PostalCode      = $Contact.PostalCode
-                IsDirSynced      = $Contact.IsDirSynced
+        [array]$script:ContactsResults = foreach ($Contact in $AllContacts) {
+            [PSCustomObject]@{
+                DisplayName          = $Contact.DisplayName
+                Company              = $Contact.Company
+                Title                = $Contact.Title
+                CountryorRegion      = $Contact.CountryOrRegion
+                PostalCode           = $Contact.PostalCode
+                IsDirSynced          = $Contact.IsDirSynced
                 RecipientTypeDetails = $Contact.RecipientTypeDetails
             }
-            $script:ContactsResults += New-Object PSObject -Property $ContactsProps
         }
-        $ContactsResults | Select-Object DisplayName, Company, Title, CountryOrRegion, PostalCode, IsDirSynced, RecipientTypeDetails
 
         $AllContactsTextBlock.Text = ($ContactsResults).Count
         $AllContactsTextBlock.Foreground = "Red"
@@ -986,20 +980,17 @@ $ConnectButton.Add_Click( {
         #PERMISSIONS tab
         #Admin Roles
         Write-Host "Retrieving Admin Roles..." -ForegroundColor Cyan
-        $script:AdminRolesPerm = Get-RoleGroup -ResultSize Unlimited 
-        $script:AdminRolesResults = @()
-		
-		foreach($AdminRole in $AdminRolesPerm){
-			$AdminRoleProps = @{
-				Name = $AdminRole.Name
+        $script:AdminRolesPerm = Get-RoleGroup -ResultSize Unlimited
+
+		[array]$script:AdminRolesResults = foreach($AdminRole in $AdminRolesPerm){
+			[PSCustomObject]@{
+				Name        = $AdminRole.Name
 				Description = $AdminRole.Description
-				Members = $AdminRole.Members -join "`n"
-				Roles = ($AdminRole.Roles) -join "`n"
+				Members     = $AdminRole.Members -join "`n"
+				Roles       = ($AdminRole.Roles) -join "`n"
 			}
-			$script:AdminRolesResults += New-Object PSObject -Property $AdminRoleProps
 		}
-		$AdminRolesResults | Select-Object Name, Description, Members, Roles
-	
+
 		$NbrOfAdminRolesTextBlock.Text = ($AdminRolesResults).Count
         $NbrOfAdminRolesTextBlock.Foreground = "Red"
         $AdminRolesDataGrid.ItemsSource = $AdminRolesResults
@@ -1021,26 +1012,23 @@ $ConnectButton.Add_Click( {
             })
 
 
-        #User Roles 
+        #User Roles
         Write-Host "Retrieving Admin Role Policies..." -ForegroundColor Cyan
 		$script:ExoUserRoles = Get-RoleAssignmentPolicy
-		$script:UserRolesResults = @()
 
-		foreach($UserRole in $ExoUserRoles){
-			$UserRoleProps = @{
-				Name = $UserRole.Name
-				IsDefault = $UserRole.IsDefault
-				Description = $UserRole.Description
+		[array]$script:UserRolesResults = foreach($UserRole in $ExoUserRoles){
+			[PSCustomObject]@{
+				Name          = $UserRole.Name
+				IsDefault     = $UserRole.IsDefault
+				Description   = $UserRole.Description
 				AssignedRoles = ($UserRole.AssignedRoles) -join "`n"
 			}
-			$script:UserRolesResults += New-Object PSObject -Property $UserRoleProps
 		}
-		$UserRolesResults | Select-Object Name, IsDefault, Description, AssignedRoles
 
         $NbrOfUserRolesTextBlock.Text = ($UserRolesResults).Count
         $NbrOfUserRolesTextBlock.Foreground = "Red"
         $UserRolesDataGrid.ItemsSource = $UserRolesResults
-     
+
 		#Export User Roles
         $ExportUserRolesButton.add_Click( {
                 # Show the "Save As" dialog window and define a default location (on the Desktop...)
@@ -1061,18 +1049,15 @@ $ConnectButton.Add_Click( {
         #OWA Policies
         Write-Host "Retrieving Mailbox Policies..." -ForegroundColor Cyan
 		$script:OWAPolicies = Get-OwaMailboxPolicy
-		$script:OWAPoliciesResults = @()
 
-		foreach($OWAPolicy in $OWAPolicies){
-			$OWAPolicyProps = @{
-				Name = $OWAPolicy.Name
-				IsDefault = $OWAPolicy.IsDefault
+		[array]$script:OWAPoliciesResults = foreach($OWAPolicy in $OWAPolicies){
+			[PSCustomObject]@{
+				Name        = $OWAPolicy.Name
+				IsDefault   = $OWAPolicy.IsDefault
 				WhenCreated = $OWAPolicy.WhenCreated
 				WhenChanged = $OWAPolicy.WhenChanged
 			}
-			$script:OWAPoliciesResults += New-Object PSObject -Property $OWAPolicyProps
 		}
-		$OWAPoliciesResults | Select-Object Name, IsDefault, WhenCreated, WhenChanged
 
         $NbrOfOWAPoliciesTextBlock.Text = ($OWAPoliciesResults).Count
         $NbrOfOWAPoliciesTextBlock.Foreground = "Red"
@@ -1096,23 +1081,20 @@ $ConnectButton.Add_Click( {
 
 
         #PROTECTION tab
-        #Malware Filter   
+        #Malware Filter
         Write-Host "Retrieving Malware Policies..." -ForegroundColor Cyan
 		$Script:MalwarePolicies = Get-MalwareFilterPolicy
-		$Script:MalwarePoliciesResults = @()
-		
-		foreach($MalwarePolicy in $MalwarePolicies){
-			$MalwarePolicyProps = @{
-				Name = $MalwarePolicy.Name
-				IsDefault = $MalwarePolicy.IsDefault
-				Action = $MalwarePolicy.Action
+
+		[array]$Script:MalwarePoliciesResults = foreach($MalwarePolicy in $MalwarePolicies){
+			[PSCustomObject]@{
+				Name                = $MalwarePolicy.Name
+				IsDefault           = $MalwarePolicy.IsDefault
+				Action              = $MalwarePolicy.Action
 				CustomNotifications = $MalwarePolicy.CustomNotifications
-				WhenCreated = $MalwarePolicy.WhenCreated
-				WhenChanged = $MalwarePolicy.WhenChanged
+				WhenCreated         = $MalwarePolicy.WhenCreated
+				WhenChanged         = $MalwarePolicy.WhenChanged
 			}
-			$Script:MalwarePoliciesResults += New-Object PSObject -Property $MalwarePolicyProps
 		}
-		$MalwarePoliciesResults | Select-Object Name, IsDefault, Action, CustomNotifications, WhenCreated, WhenChanged
 
 		$NbrOfMalwareFilterTextBlock.Text = ($MalwarePoliciesResults).Count
         $NbrOfMalwareFilterTextBlock.Foreground = "Red"
@@ -1135,22 +1117,19 @@ $ConnectButton.Add_Click( {
             })
 
 
-        #Connection Filter 
+        #Connection Filter
         Write-Host "Retrieving Connection Filter Policies..." -ForegroundColor Cyan
-        $script:ConnectionFilterResults = @()
         $script:AllConnectionFilters = Get-HostedConnectionFilterPolicy
 
-        foreach ($Connection in $AllConnectionFilters){
-            $ConnectionFilterProps = @{
-                Name = $Connection.Name
-                Default = $Connection.IsDefault
-                SafeList = $Connection.EnableSafeList
+        [array]$script:ConnectionFilterResults = foreach ($Connection in $AllConnectionFilters){
+            [PSCustomObject]@{
+                Name        = $Connection.Name
+                Default     = $Connection.IsDefault
+                SafeList    = $Connection.EnableSafeList
                 IPAllowList = ($Connection.IPAllowList) -join "`n"
                 IPBlockList = ($Connection.IPBlockList) -join "`n"
             }
-            $script:ConnectionFilterResults += New-Object PSObject -Property $ConnectionFilterProps
         }
-        $ConnectionFilterResults | Select-Object Name, Default, SafeList, IPAllowList, IPBlockList
 
         $NbrOfConnectionFiltersTextBlock.Text = ($ConnectionFilterResults).Count
         $NbrOfConnectionFiltersTextBlock.Foreground = "Red"
@@ -1173,26 +1152,23 @@ $ConnectButton.Add_Click( {
             })
 
 
-        #Spam Filter 
+        #Spam Filter
         Write-Host "Retrieving Spam Filter Policies..." -ForegroundColor Cyan
 		$script:SpamFilters = Get-HostedContentFilterPolicy
-		$script:SpamFilterResults = @()
-	
-		foreach ($SpamFilter in $SpamFilters){
-            $SpamFilterProps = @{
-                Name = $SpamFilter.Name
-                Default = $SpamFilter.IsDefault
-                SpamAction = $SpamFilter.SpamAction
-                HighConfidenceSpamAction = $SpamFilter.HighConfidenceSpamAction
-                BulkSpamAction = $SpamFilter.BulkSpamAction
-				BulkThreshold = $SpamFilter.BulkThreshold
-				LanguageBlockList = $SpamFilter.LanguageBlockList
-				RegionBlockList = $SpamFilter.RegionBlockList
+
+		[array]$script:SpamFilterResults = foreach ($SpamFilter in $SpamFilters){
+            [PSCustomObject]@{
+                Name                             = $SpamFilter.Name
+                Default                          = $SpamFilter.IsDefault
+                SpamAction                       = $SpamFilter.SpamAction
+                HighConfidenceSpamAction         = $SpamFilter.HighConfidenceSpamAction
+                BulkSpamAction                   = $SpamFilter.BulkSpamAction
+				BulkThreshold                    = $SpamFilter.BulkThreshold
+				LanguageBlockList                = $SpamFilter.LanguageBlockList
+				RegionBlockList                  = $SpamFilter.RegionBlockList
 				EndUserSpamNotificationFrequency = $SpamFilter.EndUserSpamNotificationFrequency
             }
-            $script:SpamFilterResults += New-Object PSObject -Property $SpamFilterProps
         }
-        $SpamFilterResults | Select-Object Name, IsDefault, SpamAction, HighConfidenceSpamAction, BulkSpamAction, BulkThreshold, LanguageBlockList, RegionBlockList, EndUserSpamNotificationFrequency
 
 		$NbrOfSpamFiltersTextBlock.Text = ($SpamFilterResults).Count
         $NbrOfSpamFiltersTextBlock.Foreground = "Red"
@@ -1218,19 +1194,16 @@ $ConnectButton.Add_Click( {
         #Dkim
         Write-Host "Retrieving DKIM Policies..." -ForegroundColor Cyan
 		$script:Dkim = Get-DkimSigningConfig
-		$script:DkimResults = @()
 
-		foreach ($DkimSigning in $Dkim){
-            $DkimProps = @{
-                Domain = $DkimSigning.Domain
-                Enabled = $DkimSigning.Enabled
-                Status = $DkimSigning.Status
+		[array]$script:DkimResults = foreach ($DkimSigning in $Dkim){
+            [PSCustomObject]@{
+                Domain      = $DkimSigning.Domain
+                Enabled     = $DkimSigning.Enabled
+                Status      = $DkimSigning.Status
                 LastChecked = $DkimSigning.LastChecked
             }
-            $script:DkimResults += New-Object PSObject -Property $DkimProps
         }
-        $DkimResults | Select-Object Domain, Enabled, Status, LastChecked
-		
+
 		$NbrOfDkimTextBlock.Text = ($DkimResults).Count
         $NbrOfDkimTextBlock.Foreground = "Red"
 		$DkimDataGrid.ItemsSource = $DkimResults
@@ -1280,20 +1253,17 @@ $ConnectButton.Add_Click( {
         #Accepted Domains
         Write-Host "Retrieving Accepted Domains..." -ForegroundColor Cyan
 		$script:AcceptedDomains = Get-AcceptedDomain
-		$script:AcceptedDomainsResults = @()
-		
-		foreach ($AcceptedDomain in $AcceptedDomains) {
-            $AcceptedDomainProps = @{
-                DomainName = $AcceptedDomain.DomainName
-                Default = $AcceptedDomain.Default
-                DomainType = $AcceptedDomain.DomainType
-                ExternallyManaged = $AcceptedDomain.ExternallyManaged
+
+		[array]$script:AcceptedDomainsResults = foreach ($AcceptedDomain in $AcceptedDomains) {
+            [PSCustomObject]@{
+                DomainName         = $AcceptedDomain.DomainName
+                Default            = $AcceptedDomain.Default
+                DomainType         = $AcceptedDomain.DomainType
+                ExternallyManaged  = $AcceptedDomain.ExternallyManaged
                 AddressBookEnabled = $AcceptedDomain.AddressBookEnabled
             }
-            $script:AcceptedDomainsResults += New-Object PSObject -Property $AcceptedDomainProps
         }
-        $AcceptedDomainsResults | Select-Object DomainName, Default, DomainType, ExternallyManaged, AddressBookEnabled
-	
+
 		$NbrOfAcceptedDomainsTextBlock.Text = ($AcceptedDomainsResults).Count
         $NbrOfAcceptedDomainsTextBlock.Foreground = "Red"
         $AcceptedDomainsDataGrid.ItemsSource = ($AcceptedDomainsResults)
@@ -1317,23 +1287,20 @@ $ConnectButton.Add_Click( {
 
         #Remote Domains
         Write-Host "Retrieving Remote Domains..." -ForegroundColor Cyan
-        $script:RemoteDomainsResults = @()
         $script:RemoteDomains = Get-RemoteDomain
 
-        foreach ($RemoteDomain in $RemoteDomains) {
-            $RemoteDomainProps = @{
-                Name = $RemoteDomain.Name
-                DomainName = $RemoteDomain.DomainName
-                AllowedOOFType = $RemoteDomain.AllowedOOFType
-                AutoReplyEnabled = $RemoteDomain.AutoReplyEnabled
-                AutoForwardEnabled = $RemoteDomain.AutoForwardEnabled
-                DeliveryReportEnabled = $RemoteDomain.DeliveryReportEnabled
-                NDREnabled = $RemoteDomain.NDREnabled
+        [array]$script:RemoteDomainsResults = foreach ($RemoteDomain in $RemoteDomains) {
+            [PSCustomObject]@{
+                Name                              = $RemoteDomain.Name
+                DomainName                        = $RemoteDomain.DomainName
+                AllowedOOFType                    = $RemoteDomain.AllowedOOFType
+                AutoReplyEnabled                  = $RemoteDomain.AutoReplyEnabled
+                AutoForwardEnabled                = $RemoteDomain.AutoForwardEnabled
+                DeliveryReportEnabled             = $RemoteDomain.DeliveryReportEnabled
+                NDREnabled                        = $RemoteDomain.NDREnabled
                 MeetingForwardNotificationEnabled = $RemoteDomain.MeetingForwardNotificationEnabled
             }
-            $script:RemoteDomainsResults += New-Object PSObject -Property $RemoteDomainProps
         }
-        $RemoteDomainsResults | Select-Object Name, DomainName, AllowedOOFType, AutoReplyEnabled, AutoForwardEnabled, DeliveryReportEnabled, NDREnabled, MeetingForwardNotificationEnabled
 
         $NbrOfRemoteDomainsTextBlock.Text = ($RemoteDomainsResults).Count
         $NbrOfRemoteDomainsTextBlock.Foreground = "Red"
@@ -1355,31 +1322,28 @@ $ConnectButton.Add_Click( {
                 }
             })
 
-	
+
         #MOBILE DEVICES tab
         #Quarantined Devices
         Write-Host "Retrieving Quarantined Mobile Devices..." -ForegroundColor Cyan
-        $script:DevicesResults = @()
         $script:QuarantinedDevices =  Get-MobileDevice -ResultSize Unlimited | Where-Object {$_.DeviceAccessState -eq "Quarantined"}
 
         if ($QuarantinedDevices) {
-            foreach ($DeviceUser in $QuarantinedDevices) {
+            [array]$script:DevicesResults = foreach ($DeviceUser in $QuarantinedDevices) {
 				$SplitIdentity = ($QuarantinedDevices.Identity).IndexOf("\")
 				$DeviceUserName = ($QuarantinedDevices.Identity).Substring(0, $SplitIdentity)
-                
-				$DeviceProps = @{
+
+				[PSCustomObject]@{
                     Name              = $DeviceUserName
                     FriendlyName      = $QuarantinedDevices.FriendlyName
-                    DeviceOS       = $QuarantinedDevices.DeviceOS
-                    DeviceAccessState   = $QuarantinedDevices.DeviceAccessState
-                    IsManaged           = $QuarantinedDevices.IsManaged
-                    IsCompliant         = $QuarantinedDevices.IsCompliant
-                    IsDisabled          = $QuarantinedDevices.IsDisabled
-                    WhenCreated = $QuarantinedDevices.WhenCreated
+                    DeviceOS          = $QuarantinedDevices.DeviceOS
+                    DeviceAccessState = $QuarantinedDevices.DeviceAccessState
+                    IsManaged         = $QuarantinedDevices.IsManaged
+                    IsCompliant       = $QuarantinedDevices.IsCompliant
+                    IsDisabled        = $QuarantinedDevices.IsDisabled
+                    WhenCreated       = $QuarantinedDevices.WhenCreated
                 }
-                $script:DevicesResults += New-Object PSObject -Property $DeviceProps
             }
-            $DevicesResults | Select-Object Name, FriendlyName, DeviceOS, DeviceAccessState, IsManaged, IsCompliant, IsDisabled, WhenCreated
         }
 
         $NbrOfQuarantinedDevicesTextBlock.Text = ($DevicesResults).Count
@@ -1402,23 +1366,19 @@ $ConnectButton.Add_Click( {
                 }
             })
 
-
-        #Device Access Rules   
-        Write-Host "Retrieving ActiveSync Device Access Policies..." -ForegroundColor Cyan  
+        #Device Access Rules
+        Write-Host "Retrieving ActiveSync Device Access Policies..." -ForegroundColor Cyan
 		$script:DeviceAccessRules = Get-ActiveSyncDeviceAccessRule
-		$script:DeviceAccessRulesResults = @()
-	
-		foreach ($DeviceAccessRule in $DeviceAccessRules) {
-                $DeviceAccessRuleProps = @{
-                    Name = $DeviceAccessRule.Name
-                    QueryString = $DeviceAccessRule.QueryString
+
+		[array]$script:DeviceAccessRulesResults = foreach ($DeviceAccessRule in $DeviceAccessRules) {
+                [PSCustomObject]@{
+                    Name           = $DeviceAccessRule.Name
+                    QueryString    = $DeviceAccessRule.QueryString
                     Characteristic = $DeviceAccessRule.Characteristic
-                    AccessLevel = $DeviceAccessRule.AccessLevel
+                    AccessLevel    = $DeviceAccessRule.AccessLevel
                 }
-                $script:DeviceAccessRulesResults += New-Object PSObject -Property $DeviceAccessRuleProps
             }
-            $DeviceAccessRulesResults | Select-Object Name, QueryString, Characteristic, AccessLevel
-	
+
 		$NbrOfDeviceAccessRulesTextBlock.Text = ($DeviceAccessRulesResults).Count
         $NbrOfDeviceAccessRulesTextBlock.Foreground = "Red"
         $DeviceAccessRulesDataGrid.ItemsSource = ($DeviceAccessRulesResults)
@@ -1443,27 +1403,22 @@ $ConnectButton.Add_Click( {
         #Device Mailbox Policies
         Write-Host "Retrieving Mobile Device Mailbox Policies..." -ForegroundColor Cyan
         $script:DeviceMlbxPolicies = Get-MobileDeviceMailboxPolicy
-		$script:DeviceMlbxPoliciesResults = @()
-	
-		foreach ($DeviceMlbxPolicy in $DeviceMlbxPolicies) {
-                $DeviceMlbxPoliciesProps = @{
-                    Name = $DeviceMlbxPolicy.Name
-                    IsDefault = $DeviceMlbxPolicy.IsDefault
-                    AllowSimplePassword = $DeviceMlbxPolicy.AllowSimplePassword
-                    MinPasswordLength = $DeviceMlbxPolicy.MinPasswordLength
-					MaxPasswordFailedAttempts = $DeviceMlbxPolicy.MaxPasswordFailedAttempts
-					PasswordHistory = $DeviceMlbxPolicy.PasswordHistory
-					MinPasswordComplexCharacters = $DeviceMlbxPolicy.MinPasswordComplexCharacters
-					DeviceEncryptionEnabled = $DeviceMlbxPolicy.DeviceEncryptionEnabled
-					RequireDeviceEncryption = $DeviceMlbxPolicy.RequireDeviceEncryption
-					AllowCamera = $DeviceMlbxPolicy.AllowCamera
 
+		[array]$script:DeviceMlbxPoliciesResults = foreach ($DeviceMlbxPolicy in $DeviceMlbxPolicies) {
+                [PSCustomObject]@{
+                    Name                         = $DeviceMlbxPolicy.Name
+                    IsDefault                    = $DeviceMlbxPolicy.IsDefault
+                    AllowSimplePassword          = $DeviceMlbxPolicy.AllowSimplePassword
+                    MinPasswordLength            = $DeviceMlbxPolicy.MinPasswordLength
+					MaxPasswordFailedAttempts    = $DeviceMlbxPolicy.MaxPasswordFailedAttempts
+					PasswordHistory              = $DeviceMlbxPolicy.PasswordHistory
+					MinPasswordComplexCharacters = $DeviceMlbxPolicy.MinPasswordComplexCharacters
+					DeviceEncryptionEnabled      = $DeviceMlbxPolicy.DeviceEncryptionEnabled
+					RequireDeviceEncryption      = $DeviceMlbxPolicy.RequireDeviceEncryption
+					AllowCamera                  = $DeviceMlbxPolicy.AllowCamera
                 }
-                $script:DeviceMlbxPoliciesResults += New-Object PSObject -Property $DeviceMlbxPoliciesProps
             }
-            $DeviceMlbxPoliciesResults | Select-Object Name, IsDefault, AllowSimplePassword, MinPasswordLength, MaxPasswordFailedAttempts, `
-							 PasswordHistory, MinPasswordComplexCharacters, DeviceEncryptionEnabled, RequireDeviceEncryption, AllowCamera
-	
+
 		$NbrOfMobileDeviceMlbxPoliciesTextBlock.Text = ($DeviceMlbxPoliciesResults).Count
         $NbrOfMobileDeviceMlbxPoliciesTextBlock.Foreground = "Red"
         $MobileDeviceMlbxPoliciesDataGrid.ItemsSource = ($DeviceMlbxPoliciesResults)
@@ -1490,25 +1445,22 @@ $ConnectButton.Add_Click( {
 
         #Site Collections tab
         Write-Host "Retrieving SPO Sites..." -ForegroundColor Cyan
-        $script:SPOSiteCollectionsResults = @()
-        $script:SPOSiteCollectionsAll = Get-SPOSite -Limit All -IncludePersonalSite $true 
+        $script:SPOSiteCollectionsAll = Get-SPOSite -Limit All -IncludePersonalSite $true
 		$script:SPOSiteCollections = $SPOSiteCollectionsAll | Where-Object {$_.Url -notlike "*/personal*"}
 
-		foreach($site in $SPOSiteCollections){
-			$SCProps = @{
-				Title = $site.Title
-				Url = $site.Url
-				StorageLimit = (($site.StorageQuota) / 1024).ToString("N")
-				StorageUsed = (($site.StorageUsageCurrent) / 1024).ToString("N")
-				Owner = $site.Owner
-				SharingCapability = $site.SharingCapability
-				LockState = $site.LockState
-				Template = $site.Template
+		[array]$script:SPOSiteCollectionsResults = foreach($site in $SPOSiteCollections){
+			[PSCustomObject]@{
+				Title                   = $site.Title
+				Url                     = $site.Url
+				StorageLimit            = (($site.StorageQuota) / 1024).ToString("N")
+				StorageUsed             = (($site.StorageUsageCurrent) / 1024).ToString("N")
+				Owner                   = $site.Owner
+				SharingCapability       = $site.SharingCapability
+				LockState               = $site.LockState
+				Template                = $site.Template
 				ConditionalAccessPolicy = $site.ConditionalAccessPolicy
 			}
-			$script:SPOSiteCollectionsResults += New-Object PSObject -Property $SCProps
 		}
-		$SPOSiteCollectionsResults | Select-Object Title, Url, StorageLimit, StorageUsed, Owner, SharingCapability, LockState, Template, ConditionalAccessPolicy
 
 		$NbrOfSiteColTextBlock.Text = ($SPOSiteCollectionsResults).Count
         $NbrOfSiteColTextBlock.Foreground = "Red"
@@ -1575,19 +1527,15 @@ $ConnectButton.Add_Click( {
 
         #Hub Sites tab
         Write-Host "Retrieving SPO Hub-Sites..." -ForegroundColor Cyan
-		$script:HubSitesResults = @()
 		$script:SPOHubsites = Get-SPOHubSite
 
-		foreach($Hubsite in $SPOHubsites){
-			$HubsitesProps = @{
-				Title = $Hubsite.Title
+		[array]$script:HubSitesResults = foreach($Hubsite in $SPOHubsites){
+			[PSCustomObject]@{
+				Title       = $Hubsite.Title
 				Description = $Hubsite.Description
-				SiteUrl = $Hubsite.SiteUrl
-				
+				SiteUrl     = $Hubsite.SiteUrl
 			}
-			$script:HubSitesResults += New-Object PSObject -Property $HubsitesProps
 		}
-		$HubSitesResults | Select-Object Title, Description, SiteUrl
 
 		$NbrOfHubSitesTextBlock.Text = ($HubSitesResults).Count
         $NbrOfHubSitesTextBlock.Foreground = "Red"
@@ -1612,24 +1560,21 @@ $ConnectButton.Add_Click( {
 #endregion
 
 #region ODFB TAB
-	
+
 		#Personal Sites tab
-		$script:PersoSiteCollectionsResults = @()
 		$script:PersoSiteCollections = $SPOSiteCollectionsAll | Where-Object {$_.Url -like "*/personal*"}
 
-		foreach($PersoSite in $PersoSiteCollections){
-			$PersoSCProps = @{
-				Title = $PersoSite.Title
-				StorageLimit = (($PersoSite.StorageQuota) / 1024).ToString("N")
-				StorageUsed = (($PersoSite.StorageUsageCurrent) / 1024).ToString("N")
-				Owner = $PersoSite.Owner
+		[array]$script:PersoSiteCollectionsResults = foreach($PersoSite in $PersoSiteCollections){
+			[PSCustomObject]@{
+				Title             = $PersoSite.Title
+				StorageLimit      = (($PersoSite.StorageQuota) / 1024).ToString("N")
+				StorageUsed       = (($PersoSite.StorageUsageCurrent) / 1024).ToString("N")
+				Owner             = $PersoSite.Owner
 				SharingCapability = $PersoSite.SharingCapability
-				LockState = $PersoSite.LockState
-				Template = $PersoSite.Template
+				LockState         = $PersoSite.LockState
+				Template          = $PersoSite.Template
 			}
-			$script:PersoSiteCollectionsResults += New-Object PSObject -Property $PersoSCProps
 		}
-		$PersoSiteCollectionsResults | Select-Object Title, StorageLimit, StorageUsed, Owner, SharingCapability, LockState, Template
 
 		$NbrOfPersoSiteColTextBlock.Text = ($PersoSiteCollectionsResults).Count
         $NbrOfPersoSiteColTextBlock.Foreground = "Red"
@@ -1664,29 +1609,26 @@ $ConnectButton.Add_Click( {
 
 #region SKYPE & TEAMS TAB
         Write-Host "Retrieving Skype Users..." -ForegroundColor Cyan
-		$script:SkypeUsersResults = @()
 		$script:SkypeUsers = Get-CsOnlineUser
 
-		foreach($SfboUser in $SkypeUsers){
-			$SkypeUsersProps = @{
-				DisplayName = $SfboUser.DisplayName
-				UserPrincipalName = $SfboUser.UserPrincipalName
-				Enabled = $SfboUser.Enabled
-				UsageLocation = $SfboUser.UsageLocation
-				SipProxyAddress = $SfboUser.SipProxyAddress
-				ProxyAddresses = ($SfboUser.ProxyAddresses) -join "`n"
-				InterpretedUserType = $SfboUser.InterpretedUserType
-				HideFromAddressLists = $SfboUser.HideFromAddressLists
-				EnterpriseVoiceEnabled = $SfboUser.EnterpriseVoiceEnabled
-				EnabledForRichPresence = $SfboUser.EnabledForRichPresence
-				ArchivingPolicy = $SfboUser.ArchivingPolicy
-				TeamsMeetingPolicy = $SfboUser.TeamsMeetingPolicy
-				TeamsCallingPolicy = $SfboUser.TeamsCallingPolicy
-				TeamsMessagingPolicy = $SfboUser.TeamsMessagingPolicy
-			}
-			$script:SkypeUsersResults += New-Object PSObject -Property $SkypeUsersProps
+		[array]$script:SkypeUsersResults = foreach($SfboUser in $SkypeUsers){
+			[PSCustomObject]@{
+                DisplayName            = $SfboUser.DisplayName
+                UserPrincipalName      = $SfboUser.UserPrincipalName
+                Enabled                = $SfboUser.Enabled
+                UsageLocation          = $SfboUser.UsageLocation
+                SipProxyAddress        = $SfboUser.SipProxyAddress
+                ProxyAddresses         = ($SfboUser.ProxyAddresses) -join "`n"
+                InterpretedUserType    = $SfboUser.InterpretedUserType
+                HideFromAddressLists   = $SfboUser.HideFromAddressLists
+                EnterpriseVoiceEnabled = $SfboUser.EnterpriseVoiceEnabled
+                EnabledForRichPresence = $SfboUser.EnabledForRichPresence
+                ArchivingPolicy        = $SfboUser.ArchivingPolicy
+                TeamsMeetingPolicy     = $SfboUser.TeamsMeetingPolicy
+                TeamsCallingPolicy     = $SfboUser.TeamsCallingPolicy
+                TeamsMessagingPolicy   = $SfboUser.TeamsMessagingPolicy
+            }
 		}
-		$SkypeUsersResults | Select-Object DisplayName, UserPrincipalName, Enabled, UsageLocation, SipProxyAddress, ProxyAddresses, InterpretedUserType, HideFromAddressLists, EnterpriseVoiceEnabled, EnabledForRichPresence, ArchivingPolicy, TeamsMeetingPolicy, TeamsCallingPolicy, TeamsMessagingPolicy
 
 		$NbrOfSkypeUsersTextBlock.Text = ($SkypeUsersResults).Count
         $NbrOfSkypeUsersTextBlock.Foreground = "Red"
@@ -1819,7 +1761,7 @@ $DisconnectButton.Add_Click( {
 		$SPODefaultSharingLinkTypeTextBlock.Text = ""
 		$SPOPreventExternalUsersFromResharingTextBlock.Text = ""
 		$FileAnonymousLinkTypeTextBlock.Text = ""
-		$FolderAnonymousLinkTypeTextBlock.Text = "" 
+		$FolderAnonymousLinkTypeTextBlock.Text = ""
 		$SPONotifyOwnersItemsResharedTextBlock.Text = ""
 		$SPODefaultLinkPermissionTextBlock.Text = ""
 
