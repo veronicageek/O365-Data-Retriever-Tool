@@ -15,11 +15,19 @@ This is the customized message box displaying when entering the wrong credential
 * Blog: [A Customizable WPF MessageBox for PowerShell](https://smsagent.wordpress.com/2017/08/24/a-customisable-wpf-messagebox-for-powershell/)
 
 
-## DataGrid instead of ListViews _(Damien Van Robaeys - MVP)_
-Damien helped me understand a few aspects of WPF and also provided script samples in no time.
+## XAML and WPF _(Damien Van Robaeys - MVP)_
+Damien helped me understand a few aspects of XAML and WPF as well as providing script samples in no time.
 
 * Twitter: [@syst_and_deploy](https://twitter.com/syst_and_deploy)
 * Website: [Syst & Deploy](http://www.systanddeploy.com/)
+
+
+## MahApps Design _(Jan Karger)_
+MahApps offers a modern UI for your applications, with a lot of modern design possibilities!
+
+* Github Repo: [MahApps.Metro](https://github.com/MahApps/MahApps.Metro)
+* Twitter: [@punker76](https://twitter.com/punker76)
+* Website: [MahApps](https://mahapps.com/)
 
 
 ## GitHub Gotchas _(Bryce McDonalds)_
