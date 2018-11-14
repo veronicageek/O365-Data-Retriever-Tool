@@ -68,7 +68,7 @@ _This file contains the PowerShell script with bindings to the xaml file_
 
 4. Once the tool is visible, on the top right corner, enter your O365 Global Admin account + password, then click on "Connect" _(or press "Enter" on your keyboard)_
 
-![creds_section](screenshots/creds_panel.png)
+![creds_section](screenshots/NewUpdate.png)
 
 5. Wait for a few seconds for the data to be _retrieved_ and _displayed_.
 
