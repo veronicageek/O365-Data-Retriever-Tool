@@ -1,9 +1,13 @@
 ﻿<#
-O365 Data Retriever - Release 0.1.1 (Sept 20th, 2018)
+O365 Data Retriever - Release 0.2.2 (Nov 14th, 2018)
 #>
 
 #Load the Assemblies
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, system.windows.forms
+Add-Type -AssemblyName "System.Drawing"
+[System.Reflection.Assembly]::LoadFrom("$PSScriptRoot\assembly\MahApps.Metro.dll") | Out-Null
+[System.Reflection.Assembly]::LoadFrom("$PSScriptRoot\assembly\ControlzEx.dll") | Out-Null
+[System.Reflection.Assembly]::LoadFrom("$PSScriptRoot\assembly\MahApps.Metro.IconPacks.dll") | Out-Null
 
 #Refer to the XAML file
 [string]$xamlContent = Get-Content $(Join-Path -Path $PSScriptRoot -ChildPath 'MainWindow.xaml' )
@@ -458,132 +462,21 @@ Function New-WPFMessageBox {
  #endregion
 
 
-#region CLICK CONNECT BUTTON
-############################
-
-#region Load all the controls
-$AdminTextbox = $Window.findname('AdminTextBox')
-$AdminPwdTextbox = $Window.findname('PasswordBox')
-$ConnectButton = $Window.findname('ConnectButton')
-$DisconnectButton = $Window.findname('DisconnectButton')
-$TenantTextBlock = $Window.findname('TenantTextBlock')
-$OrgNameTextBlock = $Window.findname('OrgNameTextBlock')
-$CountryTextBlock = $Window.findname('CountryTextBlock')
-$TechContactTextBlock = $Window.findname('TechContactTextBlock')
-$ContactPhoneNbrTextBlock = $Window.findname('ContactPhoneNbrTextBlock')
-$TotalNbrPlansTextBlock = $Window.findname('TotalNbrPlansTextBlock')
-$TotalLicensesTextBlock = $Window.findname('TotalLicensesTextBlock')
-$TotalAssignedLicensesTextBlock = $Window.findname('TotalAssignedLicensesTextBlock')
-$DirSyncEnabledTextBlock = $Window.findname('DirSyncEnabledTextBlock')
-$PwdSyncEnabledTextBlock = $Window.findname('PwdSyncEnabledTextBlock')
-$LastDirSyncTimeTextBlock = $Window.findname('LastDirSyncTimeTextBlock')
-$LastPwdSyncTimeTextBlock = $Window.findname('LastPwdSyncTimeTextBlock')
-$FeaturesReleaseTextBlock = $Window.findname('FeaturesReleaseTextBlock')
-#Tenant Tab
-$NbrOfDomainsTextBlock = $Window.findname('NbrOfDomainsTextBlock')
-$DomainsDataGrid = $Window.findname('DomainsDataGrid')
-$ExportDomainsButton = $Window.findname('ExportDomainsButton')
-$NbrOfPlansTextBlock = $Window.findname('NbrOfPlansTextBlock')
-$PlansDataGrid = $Window.findname('PlansDataGrid')
-$ExportPlansButton = $Window.findname('ExportPlansButton')
-$NbrOfGATextBlock = $Window.findname('NbrOfGATextBlock')
-$GADataGrid = $Window.findname('GADataGrid')
-$ExportGAButton = $Window.findname('ExportGAButton')
-$AtAGlanceTextBlock = $Window.findname('AtAGlanceTextBlock')
-$NbrOfUsersTextBlock = $Window.findname('NbrOfUsersTextBlock')
-$NbrOfSyncedUsersTextBlock = $Window.findname('NbrOfSyncedUsersTextBlock')
-$NbrOfCloudUsersTextBlock = $Window.findname('NbrOfCloudUsersTextBlock')
-$NbrOfBlockedUsersTextBlock = $Window.findname('NbrOfBlockedUsersTextBlock')
-$NbrOfBlockedAndLicensedUsersTextBlock = $Window.findname('NbrOfBlockedAndLicensedUsersTextBlock')
-$NbrOfContactsTextBlock = $Window.findname('NbrOfContactsTextBlock')
-$NbrOfGuestsTextBlock = $Window.findname('NbrOfGuestsTextBlock')
-$NbrOfGroupsTextBlock = $Window.findname('NbrOfGroupsTextBlock')
-$NbrOfShdMlbxTtextBlock = $Window.findname('NbrOfShdMlbxTtextBlock')
-$NbrofRoomsTextBlock = $Window.findname('NbrofRoomsTextBlock')
-$NbrOfEquipTextBlock = $Window.findname('NbrOfEquipTextBlock')
-#EXO Tab(s)
-$MlbxAndResourcesTotalTextBlock = $Window.findname('MlbxAndResourcesTotalTextBlock')
-$MlbxAndResourcesDataGrid = $Window.findname('MlbxAndResourcesDataGrid')
-$ExportMlbxAndResButton = $Window.findname('ExportMlbxAndResButton')
-$GroupsTextBlock = $Window.findname('GroupsTextBlock')
-$GroupsDataGrid = $Window.findname('GroupsDataGrid')
-$IncludingO365GroupsTextBlock = $Window.findname('IncludingO365GroupsTextBlock')
-$ExportGroupsButton = $Window.findname('ExportGroupsButton')
-$AllContactsTextBlock = $Window.findname('AllContactsTextBlock')
-$ContactsDataGrid = $Window.findname('ContactsDataGrid')
-$ExportContactsButton = $Window.findname('ExportContactsButton')
-$NbrOfAdminRolesTextBlock = $Window.findname('NbrOfAdminRolesTextBlock')
-$AdminRolesDataGrid  = $Window.findname('AdminRolesDataGrid')
-$ExportAdminRolesButton = $Window.findname('ExportAdminRolesButton')
-$NbrOfUserRolesTextBlock = $Window.findname('NbrOfUserRolesTextBlock')
-$UserRolesDataGrid = $Window.findname('UserRolesDataGrid')
-$ExportUserRolesButton = $Window.findname('ExportUserRolesButton')
-$NbrOfOWAPoliciesTextBlock = $Window.findname('NbrOfOWAPoliciesTextBlock')
-$OWAPoliciesDataGrid = $Window.findname('OWAPoliciesDataGrid')
-$ExportOWAPoliciesButton = $Window.findname('ExportOWAPoliciesButton')
-$NbrOfMalwareFilterTextBlock = $Window.findname('NbrOfMalwareFilterTextBlock')
-$MalwareFilterDataGrid = $Window.findname('MalwareFilterDataGrid')
-$ExportMalwareFiltersButton = $Window.findname('ExportMalwareFiltersButton')
-$NbrOfConnectionFiltersTextBlock = $Window.findname('NbrOfConnectionFiltersTextBlock')
-$ConnectionFilterDataGrid = $Window.findname('ConnectionFilterDataGrid')
-$ExportConnFiltersButton = $Window.findname('ExportConnFiltersButton')
-$NbrOfSpamFiltersTextBlock = $Window.findname('NbrOfSpamFiltersTextBlock')
-$SpamFilterDataGrid = $Window.findname('SpamFilterDataGrid')
-$ExportSpamFiltersButton = $Window.findname('ExportSpamFiltersButton')
-$NbrOfDkimTextBlock = $Window.findname('NbrOfDkimTextBlock')
-$DkimDataGrid = $Window.findname('DkimDataGrid')
-$ExportDkimButton = $Window.findname('ExportDkimButton')
-$NbrOfRulesTextBlock = $Window.findname('NbrOfRulesTextBlock')
-$RulesDataGrid = $Window.findname('RulesDataGrid')
-$ExportRulesButton = $Window.findname('ExportRulesButton')
-$NbrOfAcceptedDomainsTextBlock = $Window.findname('NbrOfAcceptedDomainsTextBlock')
-$AcceptedDomainsDataGrid = $Window.findname('AcceptedDomainsDataGrid')
-$ExportAcceptedDomainsButton = $Window.findname('ExportAcceptedDomainsButton')
-$NbrOfRemoteDomainsTextBlock = $Window.findname('NbrOfRemoteDomainsTextBlock')
-$RemoteDomainsDataGrid = $Window.findname('RemoteDomainsDataGrid')
-$ExportRemoteDomainsButton = $Window.findname('ExportRemoteDomainsButton')
-$NbrOfQuarantinedDevicesTextBlock = $Window.findname('NbrOfQuarantinedDevicesTextBlock')
-$QuarantinedDevicesDataGrid = $Window.findname('QuarantinedDevicesDataGrid')
-$ExportQuarantinedButton = $Window.findname('ExportQuarantinedButton')
-$NbrOfDeviceAccessRulesTextBlock = $Window.findname('NbrOfDeviceAccessRulesTextBlock')
-$DeviceAccessRulesDataGrid = $Window.findname('DeviceAccessRulesDataGrid')
-$ExportDeviceAccessRulesButton = $Window.findname('ExportDeviceAccessRulesButton')
-$NbrOfMobileDeviceMlbxPoliciesTextBlock = $Window.findname('NbrOfMobileDeviceMlbxPoliciesTextBlock')
-$MobileDeviceMlbxPoliciesDataGrid = $Window.findname('MobileDeviceMlbxPoliciesDataGrid')
-$ExportDeviceMlbxPolicyButton = $Window.findname('ExportDeviceMlbxPolicyButton')
-#SPO Tab(s)
-$NbrOfSiteColTextBlock = $Window.findname('NbrOfSiteColTextBlock')
-$NbrOfSiteColDataGrid = $Window.findname('NbrOfSiteColDataGrid')
-$ExportAllSCButton = $Window.findname('ExportAllSCButton')
-$NbrOfHubSitesTextBlock = $Window.findname('NbrOfHubSitesTextBlock')
-$NbrOfHubSitesDataGrid = $Window.findname('NbrOfHubSitesDataGrid')
-$ExportHubSitesButton = $Window.findname('ExportHubSitesButton')
-$NbrOfPersoSiteColTextBlock = $Window.findname('NbrOfPersoSiteColTextBlock')
-$NbrOfPersoSiteColDataGrid = $Window.findname('NbrOfPersoSiteColDataGrid')
-$ExportAllPersoSCButton = $Window.findname('ExportAllPersoSCButton')
-$SPOGlanceTextBlock = $Window.findname('SPOGlanceTextBlock')
-$SPOTotalOfSCTextBlock = $Window.findname('SPOTotalOfSCTextBlock')
-$SPOTotalStorageTextBlock = $Window.findname('SPOTotalStorageTextBlock')
-$SPOTotalStorageAllocatedTextBlock = $Window.findname('SPOTotalStorageAllocatedTextBlock')
-$SPOTotalServerResourcesTextBlock = $Window.findname('SPOTotalServerResourcesTextBlock')
-$SPOTotalResourcesAllocatedTextBlock = $Window.findname('SPOTotalResourcesAllocatedTextBlock')
-$SPOSharingCapabilityTextBlock = $Window.findname('SPOSharingCapabilityTextBlock')
-$ReqInvitationWithSameAcctTextBlock = $Window.findname('ReqInvitationWithSameAcctTextBlock')
-$SPOExternalUsersInviteSameAcctTextBlock = $Window.findname('SPOExternalUsersInviteSameAcctTextBlock')
-$ODFBforGuestEnabledTextBlock = $Window.findname('ODFBforGuestEnabledTextBlock')
-$SPODefaultSharingLinkTypeTextBlock = $Window.findname('SPODefaultSharingLinkTypeTextBlock')
-$SPOPreventExternalUsersFromResharingTextBlock = $Window.findname('SPOPreventExternalUsersFromResharingTextBlock')
-$FileAnonymousLinkTypeTextBlock = $Window.findname('FileAnonymousLinkTypeTextBlock')
-$FolderAnonymousLinkTypeTextBlock = $Window.findname('FolderAnonymousLinkTypeTextBlock')
-$SPONotifyOwnersItemsResharedTextBlock = $Window.findname('SPONotifyOwnersItemsResharedTextBlock')
-$SPODefaultLinkPermissionTextBlock = $Window.findname('SPODefaultLinkPermissionTextBlock')
-#Skype & Teams
-$NbrOfSkypeUsersTextBlock = $Window.findname('NbrOfSkypeUsersTextBlock')
-$NbrOfSkypeUsersDataGrid = $Window.findname('NbrOfSkypeUsersDataGrid')
-$ExportSkypeUsersButton = $Window.findname('ExportSkypeUsersButton')
-
+#region Bind All controls
+foreach ($Name in ($xamlFile | Select-Xml "//*/@*[name()='x:Name']" | ForEach-Object { $_.Node.Value})) {
+    New-Variable -Name $Name -Value $Window.FindName($Name) -Force
+}
 #endregion
 
+#Top bar icons (right side)
+$GHButton.Add_Click({[system.Diagnostics.Process]::Start('https://github.com/VeronicaGeek/O365-Data-Retriever-Tool')})
+$TwitterButton.Add_Click({[system.Diagnostics.Process]::Start('https://twitter.com/veronicageek')})
+$WordPressButton.Add_Click({[system.Diagnostics.Process]::Start('https://veronicageek.com')})
+
+
+
+#region CLICK CONNECT BUTTON
+############################
 
 #Focus on AdminTextBox when Window loads
 $AdminTextBox.Focus() | Out-Null
@@ -622,7 +515,7 @@ $ConnectButton.Add_Click( {
                 BorderThickness     = 1
             }
             New-WPFMessageBox @PwdErrorParams
-        }
+		}
 
 
 		#Doing some pre-checks to see if modules are present
@@ -634,7 +527,7 @@ $ConnectButton.Add_Click( {
 			Write-Host "Execution policy set correctly. OK." -ForegroundColor Green
 		}
 		else{
-			Write-Host "For this release 0.1.1, the execution policy must be set to Unrestricted or RemoteSigned. Please change it and try again." -ForegroundColor White -BackgroundColor DarkRed
+			Write-Host "For this release 0.2.2, the execution policy must be set to Unrestricted or RemoteSigned. Please change it and try again." -ForegroundColor White -BackgroundColor DarkRed
 			$Window.Close()
 			break
 		}
@@ -648,7 +541,7 @@ $ConnectButton.Add_Click( {
 		else{
 			Write-Host "Microsoft Online Module present. OK." -ForegroundColor Green
         }
-        
+
 		#Check if SharePoint Online module present
 		if (!(Get-Module -ListAvailable -Name "Microsoft.Online.SharePoint.PowerShell")){
 			Write-Host "SharePoint Online Module not present. Please download it at: https://www.microsoft.com/en-us/download/details.aspx?id=35588" -ForegroundColor Red
@@ -658,7 +551,7 @@ $ConnectButton.Add_Click( {
 		else{
 			Write-Host "SharePoint Online Module present. OK." -ForegroundColor Green
 		}
-		
+
 		#Check if Skype For Business Online module present
 		if (!(Get-Module -ListAvailable -Name "SkypeOnlineConnector")){
 			Write-Host "Skype For Business Online Module not present. Please download it at: https://www.microsoft.com/en-us/download/details.aspx?id=39366" -ForegroundColor Red
@@ -679,7 +572,7 @@ $ConnectButton.Add_Click( {
 			Write-Host "Microsoft Teams Module present. OK." -ForegroundColor Green
 		}
 
-        
+
         #Connect to O365
         try {
 			Write-Host "Connecting to Msol Service..." -ForegroundColor Cyan
@@ -695,7 +588,7 @@ $ConnectButton.Add_Click( {
 				Write-Host "You are a Global Admin. OK." -ForegroundColor Green
 			}
 			else{
-				Write-Host "You are not a Global Admin! Release 0.1.1 is only available for Global Admins. Please try again with the correct account." -ForegroundColor White -BackgroundColor DarkRed
+				Write-Host "You are not a Global Admin! Release 0.2.2 is only available for Global Admins. Please try again with the correct account." -ForegroundColor White -BackgroundColor DarkRed
 				$Window.Close()
 				break
 			}
@@ -721,18 +614,18 @@ $ConnectButton.Add_Click( {
                 BorderThickness     = 1
             }
             New-WPFMessageBox @CredsErrorParams
-
-            #Clear all and start over
-            $AdminTextBox.Clear()
-            $AdminPwdTextbox.Clear()
-            return
+			
+				#Clear all and start over
+				$AdminTextBox.Clear()
+				$AdminPwdTextbox.Clear()
+				return
         }
 
         #Connect to EXO - By default, all accounts you create in Exchange Online are allowed to use Exchange Online PowerShell.
 		Write-Host "Connecting to Exchange Online..." -ForegroundColor Cyan
 
 		#If user is MFA enabled
-		$UserAuthN = Get-MsolUser -UserPrincipalName ($creds).UserName 
+		$UserAuthN = Get-MsolUser -UserPrincipalName ($creds).UserName
 		if(($UserAuthN.StrongAuthenticationMethods) -ne $null){
 			Write-Host "You are MFA enabled..." -ForegroundColor Magenta
 			Write-Host "Unfortunately, we don't support users enabled for MFA at this point in time. Try again with a user account not MFA enabled." -ForegroundColor White -BackgroundColor DarkRed
@@ -743,7 +636,7 @@ $ConnectButton.Add_Click( {
 			$EXOsession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $creds -Authentication Basic -AllowRedirection
 			Import-PSSession $EXOsession -AllowClobber | Out-Null
 		}
-		      
+
         #Need to run the cmdlet now (after connection to EXO) to get the $SPOTenant variable assigned to the connection to SPO
         [System.String]$Tenant = Get-OrganizationConfig | Select-Object -ExpandProperty Name
         $SPOTenant = $Tenant.Replace(".onmicrosoft.com", "")
@@ -759,7 +652,7 @@ $ConnectButton.Add_Click( {
 
         #Connect to SfBO
 		Write-Host "Connecting to Skype for Business Online..." -ForegroundColor Cyan
-		
+
 		## SfBO needs WinRM to be started  ### A warning about increasing the WSMan NetworkDelayms value is expected the first time you connect and should be ignored.
 		if ((Get-Service -Name WinRM).Status -eq "Stopped"){
 			Write-Warning "WinRM is required for SfBO PowerShell Module. Starting the WinRM service..."
@@ -780,15 +673,16 @@ $ConnectButton.Add_Click( {
 
         #Then the "Disconnect" button becomes enabled
         $DisconnectButton.IsEnabled = $true
-        $DisconnectButton.Background = "#e29609"
+        #$DisconnectButton.Background = "#e29609"  ORANGE
+		$DisconnectButton.Background = "#6a8cc4"
 
 
         #Declare the variables for the TextBlocks on top of the tool
         $MSOLCompanyInfo = Get-MsolCompanyInformation
-        [System.String]$TenantDisplayName = $MSOLCompanyINfo | Select-Object -ExpandProperty DisplayName
-        [System.String]$TenantCountry = $MSOLCompanyINfo | Select-Object -ExpandProperty CountryLetterCode
-        [System.String]$TechContact = $MSOLCompanyINfo | Select-Object -ExpandProperty TechnicalNotificationEmails
-        [System.String]$TechContactPhone = $MSOLCompanyINfo | Select-Object -ExpandProperty TelephoneNumber
+        [System.String]$TenantDisplayName = $MSOLCompanyInfo | Select-Object -ExpandProperty DisplayName
+        [System.String]$TenantCountry = $MSOLCompanyInfo | Select-Object -ExpandProperty CountryLetterCode
+        [System.String]$TechContact = $MSOLCompanyInfo | Select-Object -ExpandProperty TechnicalNotificationEmails
+        [System.String]$TechContactPhone = $MSOLCompanyInfo | Select-Object -ExpandProperty TelephoneNumber
         $MSOLAccountSKU = Get-MsolAccountSku
         $TotalO365Plans = ($MSOLAccountSKU).count
         $TotalLicensesAllPlans = $MSOLAccountSKU | Measure-Object ActiveUnits -Sum | Select-Object -ExpandProperty Sum
@@ -809,7 +703,7 @@ $ConnectButton.Add_Click( {
         $TotalAssignedLicensesTextBlock.Foreground = "Green"
 
         #Check if DirSync is enabled or not
-        [System.String]$DirSyncEnabled = $MSOLCompanyINfo | Select-Object -ExpandProperty DirectorySynchronizationEnabled
+        [System.String]$DirSyncEnabled = $MSOLCompanyInfo | Select-Object -ExpandProperty DirectorySynchronizationEnabled
         if ($DirSyncEnabled -eq $true) {
             $DirSyncEnabledTextBlock.Text = "Yes"
             $DirSyncEnabledTextBlock.Foreground = "Green"
@@ -820,7 +714,7 @@ $ConnectButton.Add_Click( {
         }
 
         #Check if PasswordSync is enabled or not
-        [System.String]$PwdSyncEnabled = $MSOLCompanyINfo | Select-Object -ExpandProperty PasswordSynchronizationEnabled
+        [System.String]$PwdSyncEnabled = $MSOLCompanyInfo | Select-Object -ExpandProperty PasswordSynchronizationEnabled
         if ($PwdSyncEnabled -eq $true) {
             $PwdSyncEnabledTextBlock.Text = "Yes"
             $PwdSyncEnabledTextBlock.Foreground = "Green"
@@ -831,7 +725,7 @@ $ConnectButton.Add_Click( {
         }
 
         #Check Last DirSync Time
-        $LastDirSyncTime = $MSOLCompanyINfo | Select-Object -ExpandProperty LastDirSyncTime
+        $LastDirSyncTime = $MSOLCompanyInfo | Select-Object -ExpandProperty LastDirSyncTime
         if ($DirSyncEnabled -eq $true) {
             $LastDirSyncTimeTextBlock.Text = ($LastDirSyncTime).DateTime
         }
@@ -840,7 +734,7 @@ $ConnectButton.Add_Click( {
         }
 
         #Check Last DirSync Password Sync Time
-        $LastPwdSyncTime = $MSOLCompanyINfo | Select-Object -ExpandProperty LastPasswordSyncTime
+        $LastPwdSyncTime = $MSOLCompanyInfo | Select-Object -ExpandProperty LastPasswordSyncTime
         if ($PwdSyncEnabled -eq $true) {
             $LastPwdSyncTimeTextBlock.Text = ($LastPwdSyncTime).DateTime
         }
@@ -870,10 +764,8 @@ $ConnectButton.Add_Click( {
         }
         $DomainsResults | Select-Object Name, IsDefault, Status, Authentication
 
-        $NbrOfDomainsTextBlock.Text = ($DomainsResults).Count
-        $NbrOfDomainsTextBlock.Foreground = "Red"
         $DomainsDataGrid.ItemsSource = $DomainsResults
-
+		$ExportDomainsBadge.Badge = ($DomainsResults).Count
 
         #Export Domains
         $ExportDomainsButton.Add_Click( {
@@ -897,7 +789,7 @@ $ConnectButton.Add_Click( {
 		$PlansResults = @()
 		foreach($plan in $Plans){
 			$PlanProps = @{
-				SkuPartNumber = $plan.SkuPartNumber 
+				SkuPartNumber = $plan.SkuPartNumber
 				TotalLicenses = $plan.TotalLicenses
 				IsTrial = $plan.IsTrial
 				Status = $plan.Status
@@ -906,9 +798,8 @@ $ConnectButton.Add_Click( {
 		}
 		$PlansResults | Select-Object SkuPartNumber, TotalLicenses, IsTrial, Status
 
-        $NbrOfPlansTextBlock.Text = ($PlansResults).count
-        $NbrOfPlansTextBlock.Foreground = "Red"
         $PlansDataGrid.ItemsSource = $PlansResults
+		$ExportPlansBadge.Badge = ($PlansResults).count
 
         #Export Plans
         $ExportPlansButton.add_Click( {
@@ -926,15 +817,15 @@ $ConnectButton.Add_Click( {
                 }
             })
 
-        #Global Admins 
+        #Global Admins
         Write-Host "Retrieving Global Admin Roles..." -ForegroundColor Cyan
         $GArole = Get-MsolRole -RoleName "Company Administrator"
         $GARoleObjectId = ($GArole).ObjectId
         $script:GlobalAdmins = Get-MsolRoleMember -RoleObjectId $GARoleObjectId | Select-Object DisplayName, EmailAddress, IsLicensed
         $GARoleCount = $GlobalAdmins.count
-        $NbrOfGATextBlock.Text = $GARoleCount
-        $NbrOfGATextBlock.Foreground = "Red"
         $GADataGrid.ItemsSource = $GlobalAdmins
+
+		$ExportGABadge.Badge = ($GlobalAdmins).count
 
         #Export GA
         $ExportGAButton.add_Click( {
@@ -981,7 +872,7 @@ $ConnectButton.Add_Click( {
 
         $AllGuests = ($AllUsersList | Where-Object {$_.UserType -eq "Guest"}).count
         $NbrOfGuestsTextBlock.Text = $AllGuests
-        
+
         Write-Host "Retrieving Groups..." -ForegroundColor Cyan
         $Script:AllGroups = Get-MsolGroup -All
         $NbrOfGroupsTextBlock.Text = $AllGroups.count
@@ -1006,9 +897,8 @@ $ConnectButton.Add_Click( {
         $script:AllMlbxAndResources = $AllMailboxesList | Select-Object DisplayName, UserPrincipalName, RecipientTypeDetails, PrimarySmtpAddress, `
 								ArchiveStatus, ArchiveQuota, AuditEnabled, IsDirSynced, IsShared
 
-        $MlbxAndResourcesTotalTextBlock.Text = $AllMlbxAndResources.Count
-        $MlbxAndResourcesTotalTextBlock.Foreground = "Red"
         $MlbxAndResourcesDataGrid.ItemsSource = $AllMlbxAndResources
+		$ExportMlbxAndResBadge.Badge = ($AllMlbxAndResources).count
 
         #Export Mlbx & Resources
         $ExportMlbxAndResButton.add_Click( {
@@ -1027,22 +917,17 @@ $ConnectButton.Add_Click( {
             })
 
 
-        #Groups 
-        $AllGroupsResults = @()
-        foreach ($Group in $script:AllGroups) {
-            $GroupsProps = @{
+        #Groups
+        [array]$AllGroupsResults = foreach ($Group in $script:AllGroups) {
+            [PSCustomObject]@{
                 DisplayName  = $Group.DisplayName
                 EmailAddress = $Group.EmailAddress
                 GroupType    = $Group.GroupType
             }
-            $AllGroupsResults += New-Object PSObject -Property $GroupsProps
         }
-        $AllGroupsResults | Select-Object DisplayName, EmailAddress, GroupType
 
-        $GroupsTextBlock.Text = ($AllGroupsResults).Count
-        $GroupsTextBlock.Foreground = "Red"
         $GroupsDataGrid.ItemsSource = $AllGroupsResults
-
+		$ExportGroupsBadge.Badge = ($AllGroupsResults).count
 
         #Export Groups
         $ExportGroupsButton.add_Click( {
@@ -1063,26 +948,22 @@ $ConnectButton.Add_Click( {
 
         #Contacts
         Write-Host "Retrieving Exchange Contacts..." -ForegroundColor Cyan
-        $script:ContactsResults = @()
         $script:AllContacts = Get-Contact -ResultSize Unlimited
 
-        foreach ($Contact in $AllContacts) {
-            $ContactsProps = @{
-                DisplayName        = $Contact.DisplayName
-                Company         = $Contact.Company
-                Title            = $Contact.Title
-                CountryorRegion  = $Contact.CountryOrRegion
-                PostalCode      = $Contact.PostalCode
-                IsDirSynced      = $Contact.IsDirSynced
+        [array]$script:ContactsResults = foreach ($Contact in $AllContacts) {
+            [PSCustomObject]@{
+                DisplayName          = $Contact.DisplayName
+                Company              = $Contact.Company
+                Title                = $Contact.Title
+                CountryorRegion      = $Contact.CountryOrRegion
+                PostalCode           = $Contact.PostalCode
+                IsDirSynced          = $Contact.IsDirSynced
                 RecipientTypeDetails = $Contact.RecipientTypeDetails
             }
-            $script:ContactsResults += New-Object PSObject -Property $ContactsProps
         }
-        $ContactsResults | Select-Object DisplayName, Company, Title, CountryOrRegion, PostalCode, IsDirSynced, RecipientTypeDetails
 
-        $AllContactsTextBlock.Text = ($ContactsResults).Count
-        $AllContactsTextBlock.Foreground = "Red"
         $ContactsDataGrid.ItemsSource = $ContactsResults
+		$ExportContactsBadge.Badge = ($ContactsResults).count
 
         #Export Contacts
         $ExportContactsButton.add_Click( {
@@ -1103,23 +984,19 @@ $ConnectButton.Add_Click( {
         #PERMISSIONS tab
         #Admin Roles
         Write-Host "Retrieving Admin Roles..." -ForegroundColor Cyan
-        $script:AdminRolesPerm = Get-RoleGroup -ResultSize Unlimited 
-        $script:AdminRolesResults = @()
-		
-		foreach($AdminRole in $AdminRolesPerm){
-			$AdminRoleProps = @{
-				Name = $AdminRole.Name
+        $script:AdminRolesPerm = Get-RoleGroup -ResultSize Unlimited
+
+		[array]$script:AdminRolesResults = foreach($AdminRole in $AdminRolesPerm){
+			[PSCustomObject]@{
+				Name        = $AdminRole.Name
 				Description = $AdminRole.Description
-				Members = $AdminRole.Members -join "`n"
-				Roles = ($AdminRole.Roles) -join "`n"
+				Members     = $AdminRole.Members -join "`n"
+				Roles       = ($AdminRole.Roles) -join "`n"
 			}
-			$script:AdminRolesResults += New-Object PSObject -Property $AdminRoleProps
 		}
-		$AdminRolesResults | Select-Object Name, Description, Members, Roles
-	
-		$NbrOfAdminRolesTextBlock.Text = ($AdminRolesResults).Count
-        $NbrOfAdminRolesTextBlock.Foreground = "Red"
+
         $AdminRolesDataGrid.ItemsSource = $AdminRolesResults
+		$ExportAdminRolesBadge.Badge = ($AdminRolesResults).Count
 
 		#Export Admin Roles
         $ExportAdminRolesButton.add_Click( {
@@ -1138,26 +1015,22 @@ $ConnectButton.Add_Click( {
             })
 
 
-        #User Roles 
+        #User Roles
         Write-Host "Retrieving Admin Role Policies..." -ForegroundColor Cyan
 		$script:ExoUserRoles = Get-RoleAssignmentPolicy
-		$script:UserRolesResults = @()
 
-		foreach($UserRole in $ExoUserRoles){
-			$UserRoleProps = @{
-				Name = $UserRole.Name
-				IsDefault = $UserRole.IsDefault
-				Description = $UserRole.Description
+		[array]$script:UserRolesResults = foreach($UserRole in $ExoUserRoles){
+			[PSCustomObject]@{
+				Name          = $UserRole.Name
+				IsDefault     = $UserRole.IsDefault
+				Description   = $UserRole.Description
 				AssignedRoles = ($UserRole.AssignedRoles) -join "`n"
 			}
-			$script:UserRolesResults += New-Object PSObject -Property $UserRoleProps
 		}
-		$UserRolesResults | Select-Object Name, IsDefault, Description, AssignedRoles
 
-        $NbrOfUserRolesTextBlock.Text = ($UserRolesResults).Count
-        $NbrOfUserRolesTextBlock.Foreground = "Red"
         $UserRolesDataGrid.ItemsSource = $UserRolesResults
-     
+		$ExportUserRolesBadge.Badge = ($UserRolesResults).Count
+
 		#Export User Roles
         $ExportUserRolesButton.add_Click( {
                 # Show the "Save As" dialog window and define a default location (on the Desktop...)
@@ -1178,22 +1051,18 @@ $ConnectButton.Add_Click( {
         #OWA Policies
         Write-Host "Retrieving Mailbox Policies..." -ForegroundColor Cyan
 		$script:OWAPolicies = Get-OwaMailboxPolicy
-		$script:OWAPoliciesResults = @()
 
-		foreach($OWAPolicy in $OWAPolicies){
-			$OWAPolicyProps = @{
-				Name = $OWAPolicy.Name
-				IsDefault = $OWAPolicy.IsDefault
+		[array]$script:OWAPoliciesResults = foreach($OWAPolicy in $OWAPolicies){
+			[PSCustomObject]@{
+				Name        = $OWAPolicy.Name
+				IsDefault   = $OWAPolicy.IsDefault
 				WhenCreated = $OWAPolicy.WhenCreated
 				WhenChanged = $OWAPolicy.WhenChanged
 			}
-			$script:OWAPoliciesResults += New-Object PSObject -Property $OWAPolicyProps
 		}
-		$OWAPoliciesResults | Select-Object Name, IsDefault, WhenCreated, WhenChanged
 
-        $NbrOfOWAPoliciesTextBlock.Text = ($OWAPoliciesResults).Count
-        $NbrOfOWAPoliciesTextBlock.Foreground = "Red"
         $OWAPoliciesDataGrid.ItemsSource = $OWAPoliciesResults
+		$ExportOWAPoliciesBadge.Badge = ($OWAPoliciesResults).Count
 
 		#Export OWA Policies
         $ExportOWAPoliciesButton.add_Click( {
@@ -1213,27 +1082,23 @@ $ConnectButton.Add_Click( {
 
 
         #PROTECTION tab
-        #Malware Filter   
+        #Malware Filter
         Write-Host "Retrieving Malware Policies..." -ForegroundColor Cyan
 		$Script:MalwarePolicies = Get-MalwareFilterPolicy
-		$Script:MalwarePoliciesResults = @()
-		
-		foreach($MalwarePolicy in $MalwarePolicies){
-			$MalwarePolicyProps = @{
-				Name = $MalwarePolicy.Name
-				IsDefault = $MalwarePolicy.IsDefault
-				Action = $MalwarePolicy.Action
-				CustomNotifications = $MalwarePolicy.CustomNotifications
-				WhenCreated = $MalwarePolicy.WhenCreated
-				WhenChanged = $MalwarePolicy.WhenChanged
-			}
-			$Script:MalwarePoliciesResults += New-Object PSObject -Property $MalwarePolicyProps
-		}
-		$MalwarePoliciesResults | Select-Object Name, IsDefault, Action, CustomNotifications, WhenCreated, WhenChanged
 
-		$NbrOfMalwareFilterTextBlock.Text = ($MalwarePoliciesResults).Count
-        $NbrOfMalwareFilterTextBlock.Foreground = "Red"
+		[array]$Script:MalwarePoliciesResults = foreach($MalwarePolicy in $MalwarePolicies){
+			[PSCustomObject]@{
+				Name                = $MalwarePolicy.Name
+				IsDefault           = $MalwarePolicy.IsDefault
+				Action              = $MalwarePolicy.Action
+				CustomNotifications = $MalwarePolicy.CustomNotifications
+				WhenCreated         = $MalwarePolicy.WhenCreated
+				WhenChanged         = $MalwarePolicy.WhenChanged
+			}
+		}
+
         $MalwareFilterDataGrid.ItemsSource = $MalwarePoliciesResults
+		$ExportMalwareFilterBadge.Badge = ($MalwarePoliciesResults).Count
 
 		#Export Malware Filter
         $ExportMalwareFiltersButton.add_Click( {
@@ -1252,26 +1117,22 @@ $ConnectButton.Add_Click( {
             })
 
 
-        #Connection Filter 
+        #Connection Filter
         Write-Host "Retrieving Connection Filter Policies..." -ForegroundColor Cyan
-        $script:ConnectionFilterResults = @()
         $script:AllConnectionFilters = Get-HostedConnectionFilterPolicy
 
-        foreach ($Connection in $AllConnectionFilters){
-            $ConnectionFilterProps = @{
-                Name = $Connection.Name
-                Default = $Connection.IsDefault
-                SafeList = $Connection.EnableSafeList
+        [array]$script:ConnectionFilterResults = foreach ($Connection in $AllConnectionFilters){
+            [PSCustomObject]@{
+                Name        = $Connection.Name
+                Default     = $Connection.IsDefault
+                SafeList    = $Connection.EnableSafeList
                 IPAllowList = ($Connection.IPAllowList) -join "`n"
                 IPBlockList = ($Connection.IPBlockList) -join "`n"
             }
-            $script:ConnectionFilterResults += New-Object PSObject -Property $ConnectionFilterProps
         }
-        $ConnectionFilterResults | Select-Object Name, Default, SafeList, IPAllowList, IPBlockList
 
-        $NbrOfConnectionFiltersTextBlock.Text = ($ConnectionFilterResults).Count
-        $NbrOfConnectionFiltersTextBlock.Foreground = "Red"
         $ConnectionFilterDataGrid.ItemsSource = $ConnectionFilterResults
+		$ExportConnectionFilterBadge.Badge = ($ConnectionFilterResults).Count
 
 		#Export Connection Filter
         $ExportConnFiltersButton.add_Click( {
@@ -1290,30 +1151,26 @@ $ConnectButton.Add_Click( {
             })
 
 
-        #Spam Filter 
+        #Spam Filter
         Write-Host "Retrieving Spam Filter Policies..." -ForegroundColor Cyan
 		$script:SpamFilters = Get-HostedContentFilterPolicy
-		$script:SpamFilterResults = @()
-	
-		foreach ($SpamFilter in $SpamFilters){
-            $SpamFilterProps = @{
-                Name = $SpamFilter.Name
-                Default = $SpamFilter.IsDefault
-                SpamAction = $SpamFilter.SpamAction
-                HighConfidenceSpamAction = $SpamFilter.HighConfidenceSpamAction
-                BulkSpamAction = $SpamFilter.BulkSpamAction
-				BulkThreshold = $SpamFilter.BulkThreshold
-				LanguageBlockList = $SpamFilter.LanguageBlockList
-				RegionBlockList = $SpamFilter.RegionBlockList
+
+		[array]$script:SpamFilterResults = foreach ($SpamFilter in $SpamFilters){
+            [PSCustomObject]@{
+                Name                             = $SpamFilter.Name
+                Default                          = $SpamFilter.IsDefault
+                SpamAction                       = $SpamFilter.SpamAction
+                HighConfidenceSpamAction         = $SpamFilter.HighConfidenceSpamAction
+                BulkSpamAction                   = $SpamFilter.BulkSpamAction
+				BulkThreshold                    = $SpamFilter.BulkThreshold
+				LanguageBlockList                = $SpamFilter.LanguageBlockList
+				RegionBlockList                  = $SpamFilter.RegionBlockList
 				EndUserSpamNotificationFrequency = $SpamFilter.EndUserSpamNotificationFrequency
             }
-            $script:SpamFilterResults += New-Object PSObject -Property $SpamFilterProps
         }
-        $SpamFilterResults | Select-Object Name, IsDefault, SpamAction, HighConfidenceSpamAction, BulkSpamAction, BulkThreshold, LanguageBlockList, RegionBlockList, EndUserSpamNotificationFrequency
 
-		$NbrOfSpamFiltersTextBlock.Text = ($SpamFilterResults).Count
-        $NbrOfSpamFiltersTextBlock.Foreground = "Red"
         $SpamFilterDataGrid.ItemsSource = ($SpamFilterResults)
+		$ExportSpamFilterBadge.Badge = ($SpamFilterResults).Count
 
 		#Export Spam Filter
         $ExportSpamFiltersButton.add_Click( {
@@ -1335,22 +1192,18 @@ $ConnectButton.Add_Click( {
         #Dkim
         Write-Host "Retrieving DKIM Policies..." -ForegroundColor Cyan
 		$script:Dkim = Get-DkimSigningConfig
-		$script:DkimResults = @()
 
-		foreach ($DkimSigning in $Dkim){
-            $DkimProps = @{
-                Domain = $DkimSigning.Domain
-                Enabled = $DkimSigning.Enabled
-                Status = $DkimSigning.Status
+		[array]$script:DkimResults = foreach ($DkimSigning in $Dkim){
+            [PSCustomObject]@{
+                Domain      = $DkimSigning.Domain
+                Enabled     = $DkimSigning.Enabled
+                Status      = $DkimSigning.Status
                 LastChecked = $DkimSigning.LastChecked
             }
-            $script:DkimResults += New-Object PSObject -Property $DkimProps
         }
-        $DkimResults | Select-Object Domain, Enabled, Status, LastChecked
-		
-		$NbrOfDkimTextBlock.Text = ($DkimResults).Count
-        $NbrOfDkimTextBlock.Foreground = "Red"
+
 		$DkimDataGrid.ItemsSource = $DkimResults
+		$ExportDkimBadge.Badge = ($DkimResults).Count
 
 		#Export Spam Filter
         $ExportDkimButton.add_Click( {
@@ -1373,9 +1226,9 @@ $ConnectButton.Add_Click( {
         #Rules
         Write-Host "Retrieving Transport Rules..." -ForegroundColor Cyan
         $script:TransportRules = Get-TransportRule | Select-Object Name, State, Mode, Priority, Comments, ActivationDate, ExpiryDate
-        $NbrOfRulesTextBlock.Text = ($TransportRules).Count
-        $NbrOfRulesTextBlock.Foreground = "Red"
-        $RulesDataGrid.ItemsSource = ($TransportRules)
+        
+		$RulesDataGrid.ItemsSource = ($TransportRules)
+		$ExportRulesBadge.Badge = ($TransportRules).Count
 
 		#Export Rules
         $ExportRulesButton.add_Click( {
@@ -1397,23 +1250,19 @@ $ConnectButton.Add_Click( {
         #Accepted Domains
         Write-Host "Retrieving Accepted Domains..." -ForegroundColor Cyan
 		$script:AcceptedDomains = Get-AcceptedDomain
-		$script:AcceptedDomainsResults = @()
-		
-		foreach ($AcceptedDomain in $AcceptedDomains) {
-            $AcceptedDomainProps = @{
-                DomainName = $AcceptedDomain.DomainName
-                Default = $AcceptedDomain.Default
-                DomainType = $AcceptedDomain.DomainType
-                ExternallyManaged = $AcceptedDomain.ExternallyManaged
+
+		[array]$script:AcceptedDomainsResults = foreach ($AcceptedDomain in $AcceptedDomains) {
+            [PSCustomObject]@{
+                DomainName         = $AcceptedDomain.DomainName
+                Default            = $AcceptedDomain.Default
+                DomainType         = $AcceptedDomain.DomainType
+                ExternallyManaged  = $AcceptedDomain.ExternallyManaged
                 AddressBookEnabled = $AcceptedDomain.AddressBookEnabled
             }
-            $script:AcceptedDomainsResults += New-Object PSObject -Property $AcceptedDomainProps
         }
-        $AcceptedDomainsResults | Select-Object DomainName, Default, DomainType, ExternallyManaged, AddressBookEnabled
-	
-		$NbrOfAcceptedDomainsTextBlock.Text = ($AcceptedDomainsResults).Count
-        $NbrOfAcceptedDomainsTextBlock.Foreground = "Red"
+
         $AcceptedDomainsDataGrid.ItemsSource = ($AcceptedDomainsResults)
+		$ExportAcceptedDomainsBadge.Badge = ($AcceptedDomainsResults).Count
 
 		#Export Accepted Domains
         $ExportAcceptedDomainsButton.add_Click( {
@@ -1434,27 +1283,23 @@ $ConnectButton.Add_Click( {
 
         #Remote Domains
         Write-Host "Retrieving Remote Domains..." -ForegroundColor Cyan
-        $script:RemoteDomainsResults = @()
         $script:RemoteDomains = Get-RemoteDomain
 
-        foreach ($RemoteDomain in $RemoteDomains) {
-            $RemoteDomainProps = @{
-                Name = $RemoteDomain.Name
-                DomainName = $RemoteDomain.DomainName
-                AllowedOOFType = $RemoteDomain.AllowedOOFType
-                AutoReplyEnabled = $RemoteDomain.AutoReplyEnabled
-                AutoForwardEnabled = $RemoteDomain.AutoForwardEnabled
-                DeliveryReportEnabled = $RemoteDomain.DeliveryReportEnabled
-                NDREnabled = $RemoteDomain.NDREnabled
+        [array]$script:RemoteDomainsResults = foreach ($RemoteDomain in $RemoteDomains) {
+            [PSCustomObject]@{
+                Name                              = $RemoteDomain.Name
+                DomainName                        = $RemoteDomain.DomainName
+                AllowedOOFType                    = $RemoteDomain.AllowedOOFType
+                AutoReplyEnabled                  = $RemoteDomain.AutoReplyEnabled
+                AutoForwardEnabled                = $RemoteDomain.AutoForwardEnabled
+                DeliveryReportEnabled             = $RemoteDomain.DeliveryReportEnabled
+                NDREnabled                        = $RemoteDomain.NDREnabled
                 MeetingForwardNotificationEnabled = $RemoteDomain.MeetingForwardNotificationEnabled
             }
-            $script:RemoteDomainsResults += New-Object PSObject -Property $RemoteDomainProps
         }
-        $RemoteDomainsResults | Select-Object Name, DomainName, AllowedOOFType, AutoReplyEnabled, AutoForwardEnabled, DeliveryReportEnabled, NDREnabled, MeetingForwardNotificationEnabled
 
-        $NbrOfRemoteDomainsTextBlock.Text = ($RemoteDomainsResults).Count
-        $NbrOfRemoteDomainsTextBlock.Foreground = "Red"
         $RemoteDomainsDataGrid.ItemsSource = ($RemoteDomainsResults)
+		$ExportRemoteDomainsBadge.Badge = ($RemoteDomainsResults).Count
 
 		#Export Remote Domains
         $ExportRemoteDomainsButton.add_Click( {
@@ -1472,36 +1317,32 @@ $ConnectButton.Add_Click( {
                 }
             })
 
-	
+
         #MOBILE DEVICES tab
         #Quarantined Devices
         Write-Host "Retrieving Quarantined Mobile Devices..." -ForegroundColor Cyan
-        $script:DevicesResults = @()
         $script:QuarantinedDevices =  Get-MobileDevice -ResultSize Unlimited | Where-Object {$_.DeviceAccessState -eq "Quarantined"}
 
         if ($QuarantinedDevices) {
-            foreach ($DeviceUser in $QuarantinedDevices) {
+            [array]$script:DevicesResults = foreach ($DeviceUser in $QuarantinedDevices) {
 				$SplitIdentity = ($QuarantinedDevices.Identity).IndexOf("\")
 				$DeviceUserName = ($QuarantinedDevices.Identity).Substring(0, $SplitIdentity)
-                
-				$DeviceProps = @{
+
+				[PSCustomObject]@{
                     Name              = $DeviceUserName
                     FriendlyName      = $QuarantinedDevices.FriendlyName
-                    DeviceOS       = $QuarantinedDevices.DeviceOS
-                    DeviceAccessState   = $QuarantinedDevices.DeviceAccessState
-                    IsManaged           = $QuarantinedDevices.IsManaged
-                    IsCompliant         = $QuarantinedDevices.IsCompliant
-                    IsDisabled          = $QuarantinedDevices.IsDisabled
-                    WhenCreated = $QuarantinedDevices.WhenCreated
+                    DeviceOS          = $QuarantinedDevices.DeviceOS
+                    DeviceAccessState = $QuarantinedDevices.DeviceAccessState
+                    IsManaged         = $QuarantinedDevices.IsManaged
+                    IsCompliant       = $QuarantinedDevices.IsCompliant
+                    IsDisabled        = $QuarantinedDevices.IsDisabled
+                    WhenCreated       = $QuarantinedDevices.WhenCreated
                 }
-                $script:DevicesResults += New-Object PSObject -Property $DeviceProps
             }
-            $DevicesResults | Select-Object Name, FriendlyName, DeviceOS, DeviceAccessState, IsManaged, IsCompliant, IsDisabled, WhenCreated
         }
 
-        $NbrOfQuarantinedDevicesTextBlock.Text = ($DevicesResults).Count
-        $NbrOfQuarantinedDevicesTextBlock.Foreground = "Red"
         $QuarantinedDevicesDataGrid.ItemsSource = ($DevicesResults)
+		$ExportQuarantinedDevicesBadge.Badge = ($DevicesResults).Count
 
 		#Export Quarantined Devices
         $ExportQuarantinedButton.add_Click( {
@@ -1519,26 +1360,21 @@ $ConnectButton.Add_Click( {
                 }
             })
 
-
-        #Device Access Rules   
-        Write-Host "Retrieving ActiveSync Device Access Policies..." -ForegroundColor Cyan  
+        #Device Access Rules
+        Write-Host "Retrieving ActiveSync Device Access Policies..." -ForegroundColor Cyan
 		$script:DeviceAccessRules = Get-ActiveSyncDeviceAccessRule
-		$script:DeviceAccessRulesResults = @()
-	
-		foreach ($DeviceAccessRule in $DeviceAccessRules) {
-                $DeviceAccessRuleProps = @{
-                    Name = $DeviceAccessRule.Name
-                    QueryString = $DeviceAccessRule.QueryString
+
+		[array]$script:DeviceAccessRulesResults = foreach ($DeviceAccessRule in $DeviceAccessRules) {
+                [PSCustomObject]@{
+                    Name           = $DeviceAccessRule.Name
+                    QueryString    = $DeviceAccessRule.QueryString
                     Characteristic = $DeviceAccessRule.Characteristic
-                    AccessLevel = $DeviceAccessRule.AccessLevel
+                    AccessLevel    = $DeviceAccessRule.AccessLevel
                 }
-                $script:DeviceAccessRulesResults += New-Object PSObject -Property $DeviceAccessRuleProps
             }
-            $DeviceAccessRulesResults | Select-Object Name, QueryString, Characteristic, AccessLevel
-	
-		$NbrOfDeviceAccessRulesTextBlock.Text = ($DeviceAccessRulesResults).Count
-        $NbrOfDeviceAccessRulesTextBlock.Foreground = "Red"
+
         $DeviceAccessRulesDataGrid.ItemsSource = ($DeviceAccessRulesResults)
+		$ExportDeviceAccessRulesBadge.Badge = ($DeviceAccessRulesResults).Count
 
 		#Export Device Access Rules
         $ExportDeviceAccessRulesButton.add_Click( {
@@ -1560,30 +1396,24 @@ $ConnectButton.Add_Click( {
         #Device Mailbox Policies
         Write-Host "Retrieving Mobile Device Mailbox Policies..." -ForegroundColor Cyan
         $script:DeviceMlbxPolicies = Get-MobileDeviceMailboxPolicy
-		$script:DeviceMlbxPoliciesResults = @()
-	
-		foreach ($DeviceMlbxPolicy in $DeviceMlbxPolicies) {
-                $DeviceMlbxPoliciesProps = @{
-                    Name = $DeviceMlbxPolicy.Name
-                    IsDefault = $DeviceMlbxPolicy.IsDefault
-                    AllowSimplePassword = $DeviceMlbxPolicy.AllowSimplePassword
-                    MinPasswordLength = $DeviceMlbxPolicy.MinPasswordLength
-					MaxPasswordFailedAttempts = $DeviceMlbxPolicy.MaxPasswordFailedAttempts
-					PasswordHistory = $DeviceMlbxPolicy.PasswordHistory
-					MinPasswordComplexCharacters = $DeviceMlbxPolicy.MinPasswordComplexCharacters
-					DeviceEncryptionEnabled = $DeviceMlbxPolicy.DeviceEncryptionEnabled
-					RequireDeviceEncryption = $DeviceMlbxPolicy.RequireDeviceEncryption
-					AllowCamera = $DeviceMlbxPolicy.AllowCamera
 
+		[array]$script:DeviceMlbxPoliciesResults = foreach ($DeviceMlbxPolicy in $DeviceMlbxPolicies) {
+                [PSCustomObject]@{
+                    Name                         = $DeviceMlbxPolicy.Name
+                    IsDefault                    = $DeviceMlbxPolicy.IsDefault
+                    AllowSimplePassword          = $DeviceMlbxPolicy.AllowSimplePassword
+                    MinPasswordLength            = $DeviceMlbxPolicy.MinPasswordLength
+					MaxPasswordFailedAttempts    = $DeviceMlbxPolicy.MaxPasswordFailedAttempts
+					PasswordHistory              = $DeviceMlbxPolicy.PasswordHistory
+					MinPasswordComplexCharacters = $DeviceMlbxPolicy.MinPasswordComplexCharacters
+					DeviceEncryptionEnabled      = $DeviceMlbxPolicy.DeviceEncryptionEnabled
+					RequireDeviceEncryption      = $DeviceMlbxPolicy.RequireDeviceEncryption
+					AllowCamera                  = $DeviceMlbxPolicy.AllowCamera
                 }
-                $script:DeviceMlbxPoliciesResults += New-Object PSObject -Property $DeviceMlbxPoliciesProps
             }
-            $DeviceMlbxPoliciesResults | Select-Object Name, IsDefault, AllowSimplePassword, MinPasswordLength, MaxPasswordFailedAttempts, `
-							 PasswordHistory, MinPasswordComplexCharacters, DeviceEncryptionEnabled, RequireDeviceEncryption, AllowCamera
-	
-		$NbrOfMobileDeviceMlbxPoliciesTextBlock.Text = ($DeviceMlbxPoliciesResults).Count
-        $NbrOfMobileDeviceMlbxPoliciesTextBlock.Foreground = "Red"
+
         $MobileDeviceMlbxPoliciesDataGrid.ItemsSource = ($DeviceMlbxPoliciesResults)
+		$ExportDeviceMlbxPolicyBadge.Badge = ($DeviceMlbxPoliciesResults).Count
 
 		#Export Device Mailbox Policies
         $ExportDeviceMlbxPolicyButton.add_Click( {
@@ -1607,29 +1437,25 @@ $ConnectButton.Add_Click( {
 
         #Site Collections tab
         Write-Host "Retrieving SPO Sites..." -ForegroundColor Cyan
-        $script:SPOSiteCollectionsResults = @()
-        $script:SPOSiteCollectionsAll = Get-SPOSite -Limit All -IncludePersonalSite $true 
+        $script:SPOSiteCollectionsAll = Get-SPOSite -Limit All -IncludePersonalSite $true
 		$script:SPOSiteCollections = $SPOSiteCollectionsAll | Where-Object {$_.Url -notlike "*/personal*"}
 
-		foreach($site in $SPOSiteCollections){
-			$SCProps = @{
-				Title = $site.Title
-				Url = $site.Url
-				StorageLimit = (($site.StorageQuota) / 1024).ToString("N")
-				StorageUsed = (($site.StorageUsageCurrent) / 1024).ToString("N")
-				Owner = $site.Owner
-				SharingCapability = $site.SharingCapability
-				LockState = $site.LockState
-				Template = $site.Template
+		[array]$script:SPOSiteCollectionsResults = foreach($site in $SPOSiteCollections){
+			[PSCustomObject]@{
+				Title                   = $site.Title
+				Url                     = $site.Url
+				StorageLimit            = (($site.StorageQuota) / 1024).ToString("N")
+				StorageUsed             = (($site.StorageUsageCurrent) / 1024).ToString("N")
+				Owner                   = $site.Owner
+				SharingCapability       = $site.SharingCapability
+				LockState               = $site.LockState
+				Template                = $site.Template
 				ConditionalAccessPolicy = $site.ConditionalAccessPolicy
 			}
-			$script:SPOSiteCollectionsResults += New-Object PSObject -Property $SCProps
 		}
-		$SPOSiteCollectionsResults | Select-Object Title, Url, StorageLimit, StorageUsed, Owner, SharingCapability, LockState, Template, ConditionalAccessPolicy
 
-		$NbrOfSiteColTextBlock.Text = ($SPOSiteCollectionsResults).Count
-        $NbrOfSiteColTextBlock.Foreground = "Red"
         $NbrOfSiteColDataGrid.ItemsSource = ($SPOSiteCollectionsResults)
+		$ExportAllSCBadge.Badge = ($SPOSiteCollectionsResults).Count
 
 		#Export All Site Collections
         $ExportAllSCButton.add_Click( {
@@ -1692,23 +1518,18 @@ $ConnectButton.Add_Click( {
 
         #Hub Sites tab
         Write-Host "Retrieving SPO Hub-Sites..." -ForegroundColor Cyan
-		$script:HubSitesResults = @()
 		$script:SPOHubsites = Get-SPOHubSite
 
-		foreach($Hubsite in $SPOHubsites){
-			$HubsitesProps = @{
-				Title = $Hubsite.Title
+		[array]$script:HubSitesResults = foreach($Hubsite in $SPOHubsites){
+			[PSCustomObject]@{
+				Title       = $Hubsite.Title
 				Description = $Hubsite.Description
-				SiteUrl = $Hubsite.SiteUrl
-				
+				SiteUrl     = $Hubsite.SiteUrl
 			}
-			$script:HubSitesResults += New-Object PSObject -Property $HubsitesProps
 		}
-		$HubSitesResults | Select-Object Title, Description, SiteUrl
 
-		$NbrOfHubSitesTextBlock.Text = ($HubSitesResults).Count
-        $NbrOfHubSitesTextBlock.Foreground = "Red"
         $NbrOfHubSitesDataGrid.ItemsSource = ($HubSitesResults)
+		$ExportHubSitesBadge.Badge = ($HubSitesResults).Count
 
 		#Export All Site Collections
         $ExportHubSitesButton.add_Click( {
@@ -1729,28 +1550,24 @@ $ConnectButton.Add_Click( {
 #endregion
 
 #region ODFB TAB
-	
+
 		#Personal Sites tab
-		$script:PersoSiteCollectionsResults = @()
 		$script:PersoSiteCollections = $SPOSiteCollectionsAll | Where-Object {$_.Url -like "*/personal*"}
 
-		foreach($PersoSite in $PersoSiteCollections){
-			$PersoSCProps = @{
-				Title = $PersoSite.Title
-				StorageLimit = (($PersoSite.StorageQuota) / 1024).ToString("N")
-				StorageUsed = (($PersoSite.StorageUsageCurrent) / 1024).ToString("N")
-				Owner = $PersoSite.Owner
+		[array]$script:PersoSiteCollectionsResults = foreach($PersoSite in $PersoSiteCollections){
+			[PSCustomObject]@{
+				Title             = $PersoSite.Title
+				StorageLimit      = (($PersoSite.StorageQuota) / 1024).ToString("N")
+				StorageUsed       = (($PersoSite.StorageUsageCurrent) / 1024).ToString("N")
+				Owner             = $PersoSite.Owner
 				SharingCapability = $PersoSite.SharingCapability
-				LockState = $PersoSite.LockState
-				Template = $PersoSite.Template
+				LockState         = $PersoSite.LockState
+				Template          = $PersoSite.Template
 			}
-			$script:PersoSiteCollectionsResults += New-Object PSObject -Property $PersoSCProps
 		}
-		$PersoSiteCollectionsResults | Select-Object Title, StorageLimit, StorageUsed, Owner, SharingCapability, LockState, Template
 
-		$NbrOfPersoSiteColTextBlock.Text = ($PersoSiteCollectionsResults).Count
-        $NbrOfPersoSiteColTextBlock.Foreground = "Red"
         $NbrOfPersoSiteColDataGrid.ItemsSource = ($PersoSiteCollectionsResults)
+		$ExportAllPersoSCBadge.Badge = ($PersoSiteCollectionsResults).Count
 
 		#Export All Site Collections
         $ExportAllPersoSCButton.add_Click( {
@@ -1781,33 +1598,29 @@ $ConnectButton.Add_Click( {
 
 #region SKYPE & TEAMS TAB
         Write-Host "Retrieving Skype Users..." -ForegroundColor Cyan
-		$script:SkypeUsersResults = @()
 		$script:SkypeUsers = Get-CsOnlineUser
 
-		foreach($SfboUser in $SkypeUsers){
-			$SkypeUsersProps = @{
-				DisplayName = $SfboUser.DisplayName
-				UserPrincipalName = $SfboUser.UserPrincipalName
-				Enabled = $SfboUser.Enabled
-				UsageLocation = $SfboUser.UsageLocation
-				SipProxyAddress = $SfboUser.SipProxyAddress
-				ProxyAddresses = ($SfboUser.ProxyAddresses) -join "`n"
-				InterpretedUserType = $SfboUser.InterpretedUserType
-				HideFromAddressLists = $SfboUser.HideFromAddressLists
-				EnterpriseVoiceEnabled = $SfboUser.EnterpriseVoiceEnabled
-				EnabledForRichPresence = $SfboUser.EnabledForRichPresence
-				ArchivingPolicy = $SfboUser.ArchivingPolicy
-				TeamsMeetingPolicy = $SfboUser.TeamsMeetingPolicy
-				TeamsCallingPolicy = $SfboUser.TeamsCallingPolicy
-				TeamsMessagingPolicy = $SfboUser.TeamsMessagingPolicy
-			}
-			$script:SkypeUsersResults += New-Object PSObject -Property $SkypeUsersProps
+		[array]$script:SkypeUsersResults = foreach($SfboUser in $SkypeUsers){
+			[PSCustomObject]@{
+                DisplayName            = $SfboUser.DisplayName
+                UserPrincipalName      = $SfboUser.UserPrincipalName
+                Enabled                = $SfboUser.Enabled
+                UsageLocation          = $SfboUser.UsageLocation
+                SipProxyAddress        = $SfboUser.SipProxyAddress
+                ProxyAddresses         = ($SfboUser.ProxyAddresses) -join "`n"
+                InterpretedUserType    = $SfboUser.InterpretedUserType
+                HideFromAddressLists   = $SfboUser.HideFromAddressLists
+                EnterpriseVoiceEnabled = $SfboUser.EnterpriseVoiceEnabled
+                EnabledForRichPresence = $SfboUser.EnabledForRichPresence
+                ArchivingPolicy        = $SfboUser.ArchivingPolicy
+                TeamsMeetingPolicy     = $SfboUser.TeamsMeetingPolicy
+                TeamsCallingPolicy     = $SfboUser.TeamsCallingPolicy
+                TeamsMessagingPolicy   = $SfboUser.TeamsMessagingPolicy
+            }
 		}
-		$SkypeUsersResults | Select-Object DisplayName, UserPrincipalName, Enabled, UsageLocation, SipProxyAddress, ProxyAddresses, InterpretedUserType, HideFromAddressLists, EnterpriseVoiceEnabled, EnabledForRichPresence, ArchivingPolicy, TeamsMeetingPolicy, TeamsCallingPolicy, TeamsMessagingPolicy
 
-		$NbrOfSkypeUsersTextBlock.Text = ($SkypeUsersResults).Count
-        $NbrOfSkypeUsersTextBlock.Foreground = "Red"
         $NbrOfSkypeUsersDataGrid.ItemsSource = ($SkypeUsersResults)
+		$ExportSkypeUsersBadge.Badge = ($SkypeUsersResults).Count
 
 		#Export Skype Users
         $ExportSkypeUsersButton.add_Click( {
@@ -1833,6 +1646,17 @@ $ConnectButton.Add_Click( {
 ###############################
 $DisconnectButton.Add_Click( {
 
+	#Add Metro style dialog box
+		#OK/Cancel
+		$OKAndCancel = [MahApps.Metro.Controls.Dialogs.MessageDialogStyle]::AffirmativeAndNegative
+		
+		#'OK' ONLY
+		$OKOnly = [MahApps.Metro.Controls.Dialogs.MessageDialogStyle]::Affirmative
+ 
+		#Show OK/Cancel message
+		$OKCancelClicked = [MahApps.Metro.Controls.Dialogs.DialogManager]::ShowModalMessageExternal($Window,"Disconnect","Are you sure you want to disconnect from Office 365 services?", $OKAndCancel)
+ 
+		If ($OKCancelClicked -eq "Affirmative"){ 		
 
 		#Disconnect from EXO and Compliance Center
 		Write-Host "Disconnected from Exchange Online" -ForegroundColor DarkGreen
@@ -1866,12 +1690,12 @@ $DisconnectButton.Add_Click( {
         $TotalAssignedLicensesTextBlock.Text = ""
 
         #Tenant Tab
-        $NbrOfDomainsTextBlock.Text = ""
         $DomainsDataGrid.ItemsSource = ""
-        $NbrOfPlansTextBlock.Text = ""
+		$ExportDomainsBadge.Badge = ""
+		$ExportPlansBadge.Badge = ""
         $PlansDataGrid.ItemsSource = ""
-        $NbrOfGATextBlock.Text = ""
         $GADataGrid.ItemsSource = ""
+		$ExportGABadge.Badge = ""
         $NbrOfUsersTextBlock.Text = ""
         $NbrOfSyncedUsersTextBlock.Text = ""
         $NbrOfCloudUsersTextBlock.Text = ""
@@ -1885,46 +1709,46 @@ $DisconnectButton.Add_Click( {
         $NbrOfEquipTextBlock.Text = ""
 
         #Exo Tabs
-        $MlbxAndResourcesTotalTextBlock.Text = ""
         $MlbxAndResourcesDataGrid.ItemsSource = ""
-        $GroupsTextBlock.Text = ""
+		$ExportMlbxAndResBadge.Badge = ""
         $GroupsDataGrid.ItemsSource = ""
-        $AllContactsTextBlock.Text = ""
+		$ExportGroupsBadge.Badge = ""
         $ContactsDataGrid.ItemsSource = ""
+		$ExportContactsBadge.Badge = ""
         $AdminRolesDataGrid.ItemsSource = ""
-        $NbrOfAdminRolesTextBlock.Text = ""
-        $NbrOfUserRolesTextBlock.Text = ""
+		$ExportAdminRolesBadge.Badge = ""
         $UserRolesDataGrid.ItemsSource = ""
-        $NbrOfOWAPoliciesTextBlock.Text = ""
+		$ExportUserRolesBadge.Badge = ""
         $OWAPoliciesDataGrid.ItemsSource = ""
-        $NbrOfMalwareFilterTextBlock.Text = ""
+		$ExportOWAPoliciesBadge.Badge = ""
         $MalwareFilterDataGrid.ItemsSource = ""
-        $NbrOfConnectionFiltersTextBlock.Text = ""
+		$ExportMalwareFilterBadge.Badge = ""
         $ConnectionFilterDataGrid.ItemsSource = ""
-        $NbrOfSpamFiltersTextBlock.Text = ""
+		$ExportConnectionFilterBadge.Badge = ""
         $SpamFilterDataGrid.ItemsSource = ""
-		$NbrOfDkimTextBlock.Text = ""
+		$ExportSpamFilterBadge.Badge = ""
         $DkimDataGrid.ItemsSource = ""
-        $NbrOfRulesTextBlock.Text = ""
+		$ExportDkimBadge.Badge = ""
         $RulesDataGrid.ItemsSource = ""
-        $NbrOfAcceptedDomainsTextBlock.Text = ""
+		$ExportRulesBadge.Badge = ""
         $AcceptedDomainsDataGrid.ItemsSource = ""
-        $NbrOfRemoteDomainsTextBlock.Text = ""
+		$ExportAcceptedDomainsBadge.Badge = ""
         $RemoteDomainsDataGrid.ItemsSource = ""
-        $NbrOfQuarantinedDevicesTextBlock.Text = ""
+		$ExportRemoteDomainsBadge.Badge = ""
         $QuarantinedDevicesDataGrid.ItemsSource = ""
-        $NbrOfDeviceAccessRulesTextBlock.Text = ""
+		$ExportQuarantinedDevicesBadge.Badge = ""
         $DeviceAccessRulesDataGrid.ItemsSource = ""
-        $NbrOfMobileDeviceMlbxPoliciesTextBlock.Text = ""
+		$ExportDeviceAccessRulesBadge.Badge = ""
         $MobileDeviceMlbxPoliciesDataGrid.ItemsSource = ""
+		$ExportDeviceMlbxPolicyBadge.Badge = ""
 
 		#Spo Tabs
-		$NbrOfSiteColTextBlock.Text = ""
         $NbrOfSiteColDataGrid.ItemsSource = ""
-		$NbrOfHubSitesTextBlock.Text = ""
+		$ExportAllSCBadge.Badge = ""
         $NbrOfHubSitesDataGrid.ItemsSource = ""
-		$NbrOfPersoSiteColTextBlock.Text = ""
+		$ExportHubSitesBadge.Badge = ""
         $NbrOfPersoSiteColDataGrid.ItemsSource = ""
+		$ExportAllPersoSCBadge.Badge = ""
 		$SPOTotalOfSCTextBlock.Text = ""
 		$SPOTotalStorageTextBlock.Text = ""
 		$SPOTotalStorageAllocatedTextBlock.Text = ""
@@ -1936,37 +1760,27 @@ $DisconnectButton.Add_Click( {
 		$SPODefaultSharingLinkTypeTextBlock.Text = ""
 		$SPOPreventExternalUsersFromResharingTextBlock.Text = ""
 		$FileAnonymousLinkTypeTextBlock.Text = ""
-		$FolderAnonymousLinkTypeTextBlock.Text = "" 
+		$FolderAnonymousLinkTypeTextBlock.Text = ""
 		$SPONotifyOwnersItemsResharedTextBlock.Text = ""
 		$SPODefaultLinkPermissionTextBlock.Text = ""
 
 		#Skype & Teams
-		$NbrOfSkypeUsersTextBlock.Text = ""
 		$NbrOfSkypeUsersDataGrid.ItemsSource = ""
+		$ExportSkypeUsersBadge.Badge = ""
 
         #Change the status of the "Connect" button & "Disconnect" button
         $ConnectButton.Background = $null
-        $ConnectButton.Foreground = "Black"
+        $ConnectButton.Foreground = "White"
         $ConnectButton.Content = "Connect"
         $ConnectButton.IsHitTestVisible = $true
 
         #Disconnect button becomes disabled again...
         $DisconnectButton.IsEnabled = $false
 
-        #Pop-up window to confirm services disconnected
-        $ConfirmationParams = @{
-            Title             = "Confirmation"
-			TitleTextForeground = "White"
-            TitleBackground   = "Green"
-            TitleFontSize     = 20
-            Content           = "You are now disconnected from Office 365 services"
-            ContentFontWeight = "Medium"
-            ContentFontSize   = 14
-            BorderThickness   = 0.5
-        }
-        New-WPFMessageBox @ConfirmationParams
-    })
+		} #end of "IF disconnect button is clicked"
 
+		
+	}) 
 #endregion
 
 #Show the GUI
