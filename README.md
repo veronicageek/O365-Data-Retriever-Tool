@@ -42,11 +42,14 @@ If you use PowerShell regularly to manage your Office 365 tenant, then you shoul
 
 For the tool to run correctly, you need the following:
 
-* **Assemblies** folder  
+* **assembly** folder  
 _This folder contains all the .dll necessary for the tool_
 
-* **Images** folder  
+* **images** folder  
 _This folder contains a few images used in the tool_
+
+* **resources** folder  
+_This folder contains icons from MahApps used in the tool_
 
 * **MainWindow.xaml** file  
 _This file contains all the elements for the graphical part_
