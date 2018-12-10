@@ -77,7 +77,10 @@ _This file contains the PowerShell script with bindings to the xaml file_
 
 
 ## Having issues with the instructions?
-Please go to the [Report Issues](https://github.com/VeronicaGeek/O365-Data-Retriever-Tool/issues) page, or use the [@veronicageek](https://twitter.com/veronicageek) / [@O365DataR](https://twitter.com/O365DataR) accounts on Twitter for the time being.
+
+Have a look at this short video on [How To Install & Run the O365 Data Retriever](https://www.youtube.com/watch?v=0qOHVFIbID4) tool :bowtie:
+
+You can also go to the [Report Issues](https://github.com/VeronicaGeek/O365-Data-Retriever-Tool/issues) page, or use the [@veronicageek](https://twitter.com/veronicageek) / [@O365DataR](https://twitter.com/O365DataR) accounts on Twitter for the time being.
 
  _**Remember though, always be respectful please.**_
  
