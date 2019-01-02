@@ -747,6 +747,7 @@ $ConnectButton.Add_Click( {
         $FeaturesReleaseTextBlock.Text = $FeaturesRelease
 
 #endregion of Top block of the tool
+#endregion
 
 #region TENANT TAB
         #Domains
